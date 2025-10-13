@@ -28,27 +28,80 @@ export async function parseFrontMatterCsv(path) {
 }
 
 
-// Get Id from Serial + Coo
+// Get Id from Serial + Coo // Need to do that before sending data into table mesure
+
+
+
+
 
 // Add Measure
-const client = await pool.connect();
+
+
+// Il semblerait que la normalisation c'est pas mal 
+
+// POST endpoint to handle mesure import
+router.post("/import-mesure", async (req, res) => {
+  const { filePath, id_balise } = req.body; // Expect filePath and id_balise in request body
+  let client;
   let ok = 0, ko = 0;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
 
-    for (const r of readings) {
+    // Parse the CSV/YAML file
+    const { meta, rows } = await parseFrontMatterCsv(filePath);
+
+    // 1) Type de mesure (issu du YAML)
+    const id_type = meta.type;
+    if (!typeMesure) throw new Error('meta.type manquant');
+
+    // 2) Normalisation rapide des lignes CSV
+    const mesures = rows.map((r, i) => {
+      if (!r.ts || Number.isNaN(Date.parse(r.ts)))
+        throw new Error(`Ligne ${i + 1}: ts invalide`);
+
+      const valeur = Number(String(r.valeur ?? r.value).replace(',', '.')); // accepte "valeur" ou "value" dans le CSV
+      if (Number.isNaN(valeur))
+        throw new Error(`Ligne ${i + 1}: valeur non numérique`);
+
+      return { ts: r.ts, valeur };
+    });
+
+    // 3) Requête SQL d’insertion / mise à jour
+    const insertMesureSQL = `
+      INSERT INTO mesure (id_balise, ts, id_type, valeur)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (id_balise, ts, id_type) DO UPDATE
+        SET valeur = EXCLUDED.valeur;
+    `;
+
+    // 4) Boucle d’insertion
+    for (const m of mesures) {
       try {
-        await client.query(
-          `INSERT INTO readings (reading_id, tag_id, device_id, payload, ts)
-           VALUES ($1,$2,$3,$4,$5)
-           ON CONFLICT (reading_id) DO NOTHING`,
-          [r.reading_id, r.tag_id, r.device_id, r.payload ?? null, r.ts]
-        );
+        await client.query(insertMesureSQL, [id_balise, m.ts, id_type, m.valeur]);
         ok++;
       } catch {
         ko++;
-      }
-    }}
+      }
+    }
+
+    // 5) Validation de la transaction et réponse
+    await client.query('COMMIT');
+    res.status(201).json({
+      statut: 'ok',
+      id_balise,
+      typeMesure,
+      recues: mesures.length,
+      inserees_ou_mises_a_jour: ok,
+      echec: ko
+    });
+  } catch (e) {
+    if (client) await client.query('ROLLBACK');
+    res.status(400).json({ erreur: 'import_impossible', message: e.message });
+  } finally {
+    if (client) client.release();
+  }
+});
 
 
 
