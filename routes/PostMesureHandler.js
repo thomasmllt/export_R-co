@@ -53,7 +53,7 @@ router.post("/import-mesure", async (req, res) => {
 
     // 1) Type de mesure (issu du YAML)
     const id_type = meta.type;
-    if (!typeMesure) throw new Error('meta.type manquant');
+    if (!id_type) throw new Error('meta.type manquant');
 
     // 2) Normalisation rapide des lignes CSV
     const mesures = rows.map((r, i) => {
