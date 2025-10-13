@@ -3,19 +3,30 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 
-// Break into lines
-let readings = [];
-  if (Array.isArray(req.body)) {
-    readings = req.body;
-  } else if (req.body?.readings && Array.isArray(req.body.readings)) {
-    readings = req.body.readings;
-  } else if (req.body && typeof req.body === 'object') {
-    readings = [req.body];
-  }
+// Pour récupérer les données envoyées par l'app Dart en CSV
+// Code à mettre sur le terminal la premère fois : npm i js-yaml csv-parse
 
-  if (!readings.length) {
-    return res.status(400).json({ error: 'no_readings' });
-  }
+import fs from 'node:fs/promises';
+import yaml from 'js-yaml';
+import { parse } from 'csv-parse/sync';
+
+export async function parseFrontMatterCsv(path) {
+  const txt = await fs.readFile(path, 'utf8');
+
+  // Séparation sur les délimiteurs --- en début/fin de front-matter
+  const parts = txt.split(/^---\s*$/m).map(s => s.trim());
+  // Expecté : ["", "yaml...", "csv..."] si le fichier commence par ---
+  if (parts.length < 3) throw new Error('Front-matter manquant (délimiteurs ---)');
+
+  const meta = yaml.load(parts[1]);          // { serial, position, type, ... }
+  const csvText = parts.slice(2).join('\n'); // tout ce qui suit
+
+  // Parse CSV (1ère ligne = entêtes)
+  const rows = parse(csvText, { columns: true, skip_empty_lines: true });
+
+  return { meta, rows };
+}
+
 
 // Get Id from Serial + Coo
 
