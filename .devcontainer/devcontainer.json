@@ -1,0 +1,8 @@
+{
+  "name": "Node.js API Dev",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "forwardPorts": [3000],
+  "postCreateCommand": "npm install"
+}
