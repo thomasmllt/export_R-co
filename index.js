@@ -21,5 +21,5 @@ app.post("/balises", (req, res) => {
 });
 
 // Lancer le serveur
-const PORT = 3000;
-app.listen(PORT, () => console.log('API en écoute sur http://localhost:${PORT}'));
+const PORT = 5000;
+app.listen(PORT, () => console.log(`✅ API en écoute sur http://localhost:${PORT}`));
