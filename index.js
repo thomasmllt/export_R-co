@@ -3,22 +3,30 @@ import express from "express";
 // Création de l’application Express
 const app = express();
 
-// Middleware pour parser le JSON
+// Middleware pour parser le JSON --- Utile ?
 app.use(express.json());
+
+const baliseRouter = require("./routes/BalisesHandler");
+const postMesureRouter = require("./routes/PostMesureHandler");
+
 
 // Route simple de test
 app.get("/", (req, res) => {
   res.send("Bienvenue sur l'API R-co");
 });
 
-// Route pour recevoir les données de ton app Dart
-app.post("/balises", (req, res) => {
-  const { id, valeur } = req.body;
-  console.log('Balise reçue : ${id} = ${valeur}');
+// Dispatch vers les handler correspondant
+app.use("/balise", baliseRouter);
+app.use("/postMesure", postMesureRouter);
 
-  // (Ici, on stockera plus tard en base)
-  res.json({ message: "Données reçues", balise: { id, valeur } });
-});
+// // Route pour recevoir les données de l'app
+// app.post("/balises", (req, res) => {
+//   const { id, valeur } = req.body;
+//   console.log('Balise reçue : ${id} = ${valeur}');
+
+//   // (Ici, on stockera plus tard en base)
+//   res.json({ message: "Données reçues", balise: { id, valeur } });
+// });
 
 // Lancer le serveur
 const PORT = 5000;
