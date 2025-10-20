@@ -6,10 +6,10 @@ const app = express();
 // Middleware pour parser le JSON --- Utile ?
 app.use(express.json());
 
-const baliseRouter = require("./routes/BeaconHandler");
-const postMesureRouter = require("./routes/PostMeasurementHandler");
+const beaconRouter = require("./routes/BeaconHandler");
+const postMeasurementRouter = require("./routes/PostMeasurementHandler");
 const typeRouter = require("./routes/TypesHandler"); 
-//const measurementRouter = require("./routes/MeasurementHandler")
+const measurementRouter = require("./routes/MeasurementHandler")
 
 // Route simple de test
 app.get("/", (req, res) => {
@@ -17,10 +17,10 @@ app.get("/", (req, res) => {
 });
 
 // Dispatch vers les handler correspondant
-app.use("/balise", baliseRouter);
-app.use("/postMesure", postMesureRouter);
+app.use("/beacon", beaconRouter);
+app.use("/postMeasurement", postMeasurementRouter);
 app.use("/type", typeRouter);
-//app.use("/measurement", measurementRouter);
+app.use("/measurement", measurementRouter);
 
 // Lancer le serveur
 const PORT = 3000;

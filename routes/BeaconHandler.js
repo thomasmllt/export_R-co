@@ -14,48 +14,48 @@ router.get("/", async (req, res) => {
 });
 
 //GET serial of a beacon through its id
-router.get("/:id", async (req, res) => {
+router.get("/:id/serial", async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query("SELECT serial FROM Beacons WHERE id=$1", id);
+    const result = await pool.query("SELECT serial FROM Beacons WHERE id=$1", [id]);
     if (result.rows.length == 0) return res.status(404).json({ error: "Serial not found" });
-    res.json(result);
+    res.json(result.rows[0])
   } catch (err){
     res.status(500).json({ error: err.message });
   }
   })
 
 //GET position of a beacon through its id
-router.get("/:id", async (req, res) => {
+router.get("/:id/position", async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query("SELECT position FROM Beacons WHERE id=$1", id);
+    const result = await pool.query("SELECT position FROM Beacons WHERE id=$1", [id]);
     if (result.rows.length == 0) return res.status(404).json({ error: "Position not found" });
-    res.json(result);
+    res.json(result.rows[0]);
   } catch (err){
     res.status(500).json({ error: err.message });
   }
   })
 
 //GET name of a beacon through its id
-router.get("/:id", async (req, res) => {
+router.get("/:id/name", async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query("SELECT name FROM Beacons WHERE id=$1", id);
+    const result = await pool.query("SELECT name FROM Beacons WHERE id=$1", [id]);
     if (result.rows.length == 0) return res.status(404).json({ error: "Name not found" });
-    res.json(result);
+    res.json(result.rows[0]);
   } catch (err){
     res.status(500).json({ error: err.message });
   }
   })
 
 //GET description of a beacon through its id
-router.get("/:id", async (req, res) => {
+router.get("/:id/description", async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query("SELECT description FROM Beacons WHERE id=$1", id);
+    const result = await pool.query("SELECT description FROM Beacons WHERE id=$1", [id]);
     if (result.rows.length == 0) return res.status(404).json({ error: "Description not found" });
-    res.json(result);
+    res.json(result.rows[0]);
   } catch (err){
     res.status(500).json({ error: err.message });
   }

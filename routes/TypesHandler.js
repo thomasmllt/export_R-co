@@ -20,9 +20,9 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const { id_type } = req.params;
   try {
-    const result = await pool.query("SELECT * FROM Type Measurement WHERE id_type=$1", [id_type]);
+    const result = await pool.query("SELECT * FROM Type_measurement WHERE id_type=$1", [id_type]);
     if (result.rows.length === 0) return res.status(404).json({ error: "Type not found" });
-    res.json(result.rows[0]);
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
