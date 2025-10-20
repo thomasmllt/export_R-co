@@ -8,7 +8,7 @@ app.use(express.json());
 
 const baliseRouter = require("./routes/BalisesHandler");
 const postMesureRouter = require("./routes/PostMesureHandler");
-const typeRouter = require("./routes/TypeHandler"); 
+const typeRouter = require("./routes/TypesHandler"); 
 
 // Route simple de test
 app.get("/", (req, res) => {
@@ -31,4 +31,4 @@ app.use("/type", typeRouter);
 
 // Lancer le serveur
 const PORT = 5000;
-app.listen(PORT, () => console.log('✅ API en écoute sur http://localhost:${PORT}'));
+app.listen(PORT, () => console.log("Server running at http://localhost:${PORT}"));
