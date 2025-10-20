@@ -6,11 +6,11 @@ const pool = require("../db");
 // Pour récupérer les données envoyées par l'app Dart en CSV
 // Code à mettre sur le terminal la premère fois : npm i js-yaml csv-parse
 
-import fs from 'node:fs/promises';
-import yaml from 'js-yaml';
-import { parse } from 'csv-parse/sync';
+const fs = require('node:fs/promises');
+const yaml = require('js-yaml');
+const { parse } = require('csv-parse/sync');
 
-export async function parseFrontMatterCsv(path) {
+async function parseFrontMatterCsv(path) {
   const txt = await fs.readFile(path, 'utf8');
 
   // Séparation sur les délimiteurs --- en début/fin de front-matter
@@ -90,7 +90,7 @@ router.post("/import-mesure", async (req, res) => {
     res.status(201).json({
       statut: 'ok',
       id_balise,
-      typeMesure,
+      typeMesure: id_type,
       recues: mesures.length,
       inserees_ou_mises_a_jour: ok,
       echec: ko
@@ -119,3 +119,4 @@ router.post("/", async (req, res) => {
 
 
 module.exports = router;
+
