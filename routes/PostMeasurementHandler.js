@@ -69,9 +69,9 @@ router.post("/import-mesure", async (req, res) => {
 
     // 3) Requête SQL d’insertion / mise à jour
     const insertMesureSQL = `
-      INSERT INTO mesure (id_balise, ts, id_type, valeur)
+      INSERT INTO measurement (id_beacon, timestamp, id_type, value)
       VALUES ($1, $2, $3, $4)
-      ON CONFLICT (id_balise, ts, id_type) DO UPDATE
+      ON CONFLICT (id_balise, timestamp, id_type) DO UPDATE
         SET valeur = EXCLUDED.valeur;
     `;
 
@@ -102,21 +102,6 @@ router.post("/import-mesure", async (req, res) => {
     if (client) client.release();
   }
 });
-
-
-
-
-// POST create new object
-router.post("/", async (req, res) => {
-  const { name, value } = req.body;
-  try {
-    await pool.query("INSERT INTO objects (name, value) VALUES ($1, $2)", [name, value]);
-    res.status(201).json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 
 module.exports = router;
 

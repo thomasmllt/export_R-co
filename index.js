@@ -6,9 +6,10 @@ const app = express();
 // Middleware pour parser le JSON --- Utile ?
 app.use(express.json());
 
-const baliseRouter = require("./routes/BalisesHandler");
-const postMesureRouter = require("./routes/PostMesureHandler");
+const baliseRouter = require("./routes/BeaconHandler");
+const postMesureRouter = require("./routes/PostMeasurementHandler");
 const typeRouter = require("./routes/TypesHandler"); 
+//const measurementRouter = require("./routes/MeasurementHandler")
 
 // Route simple de test
 app.get("/", (req, res) => {
@@ -19,16 +20,8 @@ app.get("/", (req, res) => {
 app.use("/balise", baliseRouter);
 app.use("/postMesure", postMesureRouter);
 app.use("/type", typeRouter);
-
-// // Route pour recevoir les données de l'app
-// app.post("/balises", (req, res) => {
-//   const { id, valeur } = req.body;
-//   console.log('Balise reçue : ${id} = ${valeur}');
-
-//   // (Ici, on stockera plus tard en base)
-//   res.json({ message: "Données reçues", balise: { id, valeur } });
-// });
+//app.use("/measurement", measurementRouter);
 
 // Lancer le serveur
-const PORT = 5000;
-app.listen(PORT, () => console.log("Server running at http://localhost:${PORT}"));
+const PORT = 3000;
+app.listen(PORT, () => console.log("Server running at http://localhost:",PORT));
