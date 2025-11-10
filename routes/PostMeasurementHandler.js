@@ -40,8 +40,8 @@ async function parseFrontMatterCsv(path) {
 // Il semblerait que la normalisation c'est pas mal 
 
 // POST endpoint to handle mesure import
-router.post("/import-mesure", async (req, res) => {
-  const { filePath, id_balise } = req.body; // Expect filePath and id_balise in request body
+router.post("/import", async (req, res) => {
+  const { filePath, id_beacon } = req.body; // Expect filePath and id_balise in request body
   let client;
   let ok = 0, ko = 0;
   try {
@@ -69,16 +69,16 @@ router.post("/import-mesure", async (req, res) => {
 
     // 3) Requête SQL d’insertion / mise à jour
     const insertMesureSQL = `
-      INSERT INTO measurement (id_beacon, timestamp, id_type, value)
+      INSERT INTO measurements (id_beacon, timestamp, id_type, value)
       VALUES ($1, $2, $3, $4)
-      ON CONFLICT (id_balise, timestamp, id_type) DO UPDATE
-        SET valeur = EXCLUDED.valeur;
+      ON CONFLICT (id_beacon, timestamp, id_type) DO UPDATE
+        SET value = EXCLUDED.value;
     `;
 
     // 4) Boucle d’insertion
     for (const m of mesures) {
       try {
-        await client.query(insertMesureSQL, [id_balise, m.ts, id_type, m.valeur]);
+        await client.query(insertMesureSQL, [id_beacon, m.ts, id_type, m.valeur]);
         ok++;
       } catch {
         ko++;
@@ -89,7 +89,7 @@ router.post("/import-mesure", async (req, res) => {
     await client.query('COMMIT');
     res.status(201).json({
       statut: 'ok',
-      id_balise,
+      id_beacon,
       typeMesure: id_type,
       recues: mesures.length,
       inserees_ou_mises_a_jour: ok,
@@ -104,4 +104,3 @@ router.post("/import-mesure", async (req, res) => {
 });
 
 module.exports = router;
-
