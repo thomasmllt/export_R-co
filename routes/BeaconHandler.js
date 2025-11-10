@@ -61,6 +61,19 @@ router.get("/:id/description", async (req, res) => {
   }
   })
 
+  // GET last_update from beacon id
+ router.get("/:id/last_update", async (req, res) => {
+   const { id } = req.params;
+   try {
+     const result = await pool.query("SELECT MAX(timestamp) FROM measurements WHERE id_beacon=$1", [id]);
+     if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
+     res.json(result.rows[0]);
+   } catch (err) {
+     console.error(err);
+     res.status(500).json({ error: err.message });
+   }
+ });
+ 
 //PUT update name of a beacon through its id
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
