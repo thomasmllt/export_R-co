@@ -103,18 +103,7 @@ router.put("/:id/description", async (req, res) => {
   }
 });
 
-//GET id from (Serial, Position) of a beacon
-router.get("/:serial/:position/getId", async(req, res) => {
-  const { serial, position } = req.params;
-  // approximation position ici ??
-  try {
-    const result = await pool.query("SELECT id FROM Beacons WHERE serial = $1 AND position=$2", [serial, position]);
-    if (result.rows.length > 1) return res.status(300).json({ error: "Error: Several beacons with same serial and position in DB" }); 
-    if (result.rows.length == 0) return res.status(404).json({ error: "Beacon not found"});
-    res.json(result)
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-}});
+
 
 
 
@@ -158,48 +147,5 @@ router.get("/getId", async (req, res) => {
 
 
 
-
-
-
-
-// //// TEMPLATE A DELETE
-// // POST create new object
-// router.post("/", async (req, res) => {
-//   const { name, value } = req.body;
-//   try {
-//     await pool.query("INSERT INTO objects (name, value) VALUES ($1, $2)", [name, value]);
-//     res.status(201).json({ success: true });
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// });
-
-// // PUT update object
-// router.put("/:id", async (req, res) => {
-//   const { id } = req.params;
-//   const { name, value } = req.body;
-//   try {
-//     const result = await pool.query(
-//       "UPDATE objects SET name=$1, value=$2 WHERE id=$3 RETURNING *",
-//       [name, value, id]
-//     );
-//     if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
-//     res.json(result.rows[0]);
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// });
-
-// // DELETE object
-// router.delete("/:id", async (req, res) => {
-//   const { id } = req.params;
-//   try {
-//     const result = await pool.query("DELETE FROM objects WHERE id=$1 RETURNING *", [id]);
-//     if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
-//     res.json({ success: true });
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// });
 
 module.exports = router;
