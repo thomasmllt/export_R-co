@@ -47,17 +47,16 @@ router.get("/", async (req, res) => {
  });
 
  // GET all measurement timestamp+value for beacon id and type of measeurment
- router.get("/:id/:type", async (req, res) => {
-   const { id, type } = req.params;
-   try {
-     const result = await pool.query("SELECT timestamp, value FROM measurements WHERE id_beacon=$1 AND id_type=$2", [id, type]);
-     if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
-     res.json(result.rows[0]);
-   } catch (err) {
-     console.error(err);
-     res.status(500).json({ error: err.message });
-   }
- });
+router.get("/:id/:type", async (req, res) => {
+  const { id, type } = req.params;
+  try {
+    const result = await pool.query("SELECT timestamp, value FROM measurements WHERE id_beacon=$1 AND id_type=$2", [id, type]);
+    if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);     res.status(500).json({ error: err.message });
+  }
+});
 
 // POST create new mesure
 router.post("/", async (req, res) => {

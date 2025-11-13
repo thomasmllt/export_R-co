@@ -75,7 +75,9 @@ router.get("/:id/description", async (req, res) => {
  });
  
 //PUT update name of a beacon through its id
-router.put("/:id", async (req, res) => {
+
+//Test Fonctionnel OK
+router.put("/:id/name", async (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
   try {
@@ -88,13 +90,14 @@ router.put("/:id", async (req, res) => {
 });
 
 //PUT update description of a beacon through its id
-router.put("/:id", async (req, res) => {
+// Test OK
+router.put("/:id/description", async (req, res) => {
   const { id } = req.params;
   const { description } = req.body;
   try {
     const result = await pool.query(
-      "UPDATE Beacons SET name=$1 WHERE id=$2", [description, id]);
-    res.json("Name updated");
+      "UPDATE Beacons SET description=$1 WHERE id=$2", [description, id]);
+    res.json("Description updated");
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
