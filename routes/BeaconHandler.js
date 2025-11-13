@@ -104,8 +104,8 @@ router.put("/:id/description", async (req, res) => {
 });
 
 //GET id from (Serial, Position) of a beacon
-router.get("/", async(req, res) => {
-  const {serial, position} = req.body;
+router.get("/:serial/:position/getId", async(req, res) => {
+  const { serial, position } = req.params;
   // approximation position ici ??
   try {
     const result = await pool.query("SELECT id FROM Beacons WHERE serial = $1 AND position=$2", [serial, position]);
@@ -115,6 +115,50 @@ router.get("/", async(req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
 }});
+
+
+
+// GET beacon ID with GPS tolerance (~50 meters)
+router.get("/getId", async (req, res) => {
+  const { serial, lat, lon } = req.query;
+
+  if (!serial || !lat || !lon) {
+    return res.status(400).json({
+      error: "Missing parameters. Expected: serial, lat, lon"
+    });
+  }
+
+  // Tolérance en degrés (≈ 50 m)
+  const LAT_TOL = 0.00045; // ~ 50 m
+  const LON_TOL = 0.00070; // ~ 50 m at latitude ~48°
+
+  try {
+    const result = await pool.query(
+      `SELECT id
+       FROM Beacons
+       WHERE serial = $1
+       AND ABS(position[0] - $2::float) < $4
+       AND ABS(position[1] - $3::float) < $5`,
+      [serial, lat, lon, LAT_TOL, LON_TOL]
+    );
+
+    if (result.rowCount > 1)
+      return res.status(300).json({ error: "Multiple beacons in tolerance area" });
+
+    if (result.rowCount === 0)
+      return res.status(404).json({ error: "No beacon found in tolerance radius" });
+
+    res.json({ statut: "ok", id: result.rows[0].id });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+
+
 
 
 
