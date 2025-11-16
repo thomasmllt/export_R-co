@@ -22,8 +22,33 @@ router.use((req, res, next) => {
 
 // reception des données depuis l'app mobile
 router.post("/", async (req, res) => {
-  return res.status(201).json({ status: "ok" });
+  const data = req.body;
+
+  if (!data || (Array.isArray(data) && data.length === 0)) {
+    return res.status(400).json({
+      status: "error",
+      message: "Aucune donnée reçue"
+    });
+  }
+
+  
+  if (!data[0]?.sensorType || !data[0]?.measurements) {
+    return res.status(400).json({
+      status: "error",
+      message: "Format invalide"
+    });
+  }
+
+ 
+  console.log("Données reçues depuis l'app mobile :", JSON.stringify(data, null, 2));
+
+  return res.status(201).json({
+    status: "ok",
+    received: true,
+    count: data[0].measurements.length,
+  });
 });
+
 
 // @Pour récupérer les données envoyées par l'app Dart en CSV
 // Code à mettre sur le terminal la premère fois : npm i js-yaml csv-parse
