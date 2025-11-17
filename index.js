@@ -3,8 +3,15 @@ const express = require("express");
 // Création de l’application Express
 const app = express();
 
+const cors = require("cors");
+
+
 // Middleware pour parser le JSON --- Utile ?
 app.use(express.json());
+
+
+app.use(cors());
+
 
 const beaconRouter = require("./routes/BeaconHandler");
 const postMeasurementRouter = require("./routes/PostMeasurementHandler");
