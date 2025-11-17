@@ -13,6 +13,24 @@ export default function DetailsPage() {
   const nbMesures = marker.mesureT.length;
   const name = marker ? marker.name : "Unknown";
   const labels = marker.mesureT.map((_, i) => `Mesure ${i + 1}`);
+  const [beaconName, setBeaconName] = React.useState("Chargement..."); //Test Julien
+
+  React.useEffect(() => {
+  async function fetchBeaconName() {
+    try {
+      const response = await fetch(`http://localhost:3000/beacon/${id}/name`);
+      const data = await response.json();
+      setBeaconName(data.name);  
+    } catch (error) {
+      console.error("Erreur backend :", error);
+      setBeaconName("Erreur lors du chargement");
+    }
+  }
+
+  fetchBeaconName();
+}, [id]);
+
+
 
   const dataT = {
     labels,
@@ -101,7 +119,7 @@ export default function DetailsPage() {
         <div  style={{ height : "100%",width: '15%', padding: '20px'}}></div>
         <div style={{ height : "100%",width: '50%', padding: '0px'}}>
           <h1>Données de la balise {name}</h1>
-          <h2>Données de test : </h2>
+          <h2>Données de test : {beaconName} </h2>
           <center><Line data={dataT} options={optionsT} width={800} height={400}/></center><br/><br/><br/><br/><br/>
           <center><Line data={dataP} options={optionsP} width={800} height={400}/></center>
         </div>
