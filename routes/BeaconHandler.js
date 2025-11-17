@@ -74,9 +74,7 @@ router.get("/:id/description", async (req, res) => {
    }
  });
  
-//PUT update name of a beacon through its id
-
-//Test Fonctionnel OK
+//PUT update name of a beacon through its id : Test Fonctionnel OK
 router.put("/:id/name", async (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
