@@ -6,3 +6,18 @@ html, body, #root {
   margin: 0;
   padding: 0;
 }
+
+.container {
+  position: relative;
+  height: 96.9%;
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+.footer-info {
+  position: absolute;
+  bottom: 10px; /* distance depuis le bas */
+  left: 10px;
+  font-size: 0.9em;
+  color: #666;
+}
