@@ -104,6 +104,35 @@ router.put("/:id/description", async (req, res) => {
 });
 
 
+// POST create a new beacon (position stored as POINT)
+router.post("/", async (req, res) => {
+  const { serial, lat, lon, name, description } = req.body;
+
+  if (!serial || !lat || !lon) {
+    return res.status(400).json({
+      error: "Missing parameters. Required: serial, lat, lon",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO Beacons (serial, position, name, description)
+       VALUES ($1, POINT($2, $3), $4, $5)
+       RETURNING id`,
+      [serial, lat, lon, name || null, description || null]
+    );
+
+    return res.status(201).json({
+      statut: "ok",
+      id: result.rows[0].id,
+      created: true
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 
 
@@ -143,6 +172,9 @@ router.get("/getId", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+
 
 
 
