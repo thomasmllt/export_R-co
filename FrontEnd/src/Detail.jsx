@@ -101,6 +101,7 @@ export default function DetailsPage() {
         <div  style={{ height : "100%",width: '15%', padding: '20px'}}></div>
         <div style={{ height : "100%",width: '50%', padding: '0px'}}>
           <h1>Données de la balise {name}</h1>
+          <h2>Données de test : </h2>
           <center><Line data={dataT} options={optionsT} width={800} height={400}/></center><br/><br/><br/><br/><br/>
           <center><Line data={dataP} options={optionsP} width={800} height={400}/></center>
         </div>
