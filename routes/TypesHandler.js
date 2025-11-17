@@ -40,8 +40,8 @@ router.get("/:id", async (req, res) => {
 
 // ----------- PUT -----------
 
-// PUT update type : Name
-router.put("/:id", async (req, res) => {
+// PUT update type : Name OKKKK
+router.put("/:id/name", async (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
   if (!name ) {
@@ -61,8 +61,8 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// PUT update type : Unit
-router.put("/:id", async (req, res) => {
+// PUT update type : Unit OKKKK
+router.put("/:id/unit", async (req, res) => {
   const { id } = req.params;
   const { unit } = req.body;
   if (!unit ) {
@@ -83,8 +83,8 @@ router.put("/:id", async (req, res) => {
 });
 
 
-// PUT update type : Description
-router.put("/:id", async (req, res) => {
+// PUT update type : Description OKKKK
+router.put("/:id/description", async (req, res) => {
   const { id } = req.params;
   const { description } = req.body;
   if (!description ) {
@@ -148,7 +148,7 @@ router.post("/", async (req, res) => {
 
 
 
-// DELETE type
+// DELETE type : OKKK
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   try {
