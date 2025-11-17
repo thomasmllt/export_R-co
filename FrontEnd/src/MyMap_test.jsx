@@ -48,6 +48,8 @@ const createClusterIcon = (count) =>
 });
 
 
+
+
 function ClusterLayer({ points, setHoveredInfo }) {
   const navigate = useNavigate();
   const map = useMap();
@@ -121,7 +123,7 @@ function ClusterLayer({ points, setHoveredInfo }) {
             eventHandlers={{
             click: () => handleMarkerClick(feature.properties.id),
             mouseover: () => setHoveredInfo(
-              <div>
+              <div class="container">
                 <p style={{ fontSize: "25px" }}>{feature.name}</p>
                 <p>Position GPS : {feature.geometry.coordinates.join(', ')}</p>
                 <p>{feature.description}</p>
@@ -129,8 +131,8 @@ function ClusterLayer({ points, setHoveredInfo }) {
                 <p>Température moyenne : {(feature.mesureT.reduce((sum, num) => sum + num, 0)*100 / feature.mesureT.length).toFixed(0)/100}</p>
                 <p>Humidité moyenne : {(feature.mesureH.reduce((sum, num) => sum + num, 0)*100 / feature.mesureH.length).toFixed(0)/100}</p>
                 <p>Pression moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
-                <br></br><br></br><br></br><br></br><br></br><br></br><br></br><br></br><br></br><br></br><br></br><br></br><br></br><br></br><br></br><br></br><br></br><br></br>
-                <p>Dernière modification : {lastmod.toLocaleDateString("fr-FR")}</p>
+                
+                <span class="footer-info">Dernière modification : {lastmod.toLocaleDateString("fr-FR")}</span>
               </div>
             ),
             mouseout: () => setHoveredInfo(null),
