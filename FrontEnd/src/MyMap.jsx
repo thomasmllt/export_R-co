@@ -127,7 +127,7 @@ function ClusterLayer({ points, setHoveredInfo }) {
                 <p style={{ fontSize: "25px" }}>{feature.name}</p>
                 <p>Position GPS : {feature.geometry.coordinates.join(', ')}</p>
                 <p>{feature.description}</p>
-                <p>__________________________________________</p>
+                <p>_____________________________________________</p>
                 <p>Température moyenne : {(feature.mesureT.reduce((sum, num) => sum + num, 0)*100 / feature.mesureT.length).toFixed(0)/100}</p>
                 <p>Humidité moyenne : {(feature.mesureH.reduce((sum, num) => sum + num, 0)*100 / feature.mesureH.length).toFixed(0)/100}</p>
                 <p>Pression moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
