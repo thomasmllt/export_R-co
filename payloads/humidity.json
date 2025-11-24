@@ -1,0 +1,18 @@
+{
+      "sensorType": "HUMIDITY_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": null,
+        "lon": null
+      },
+      "measurements": [
+        {
+          "currentValue": 57,
+          "historyAcquisitionTime": "2025-11-13T10:40:20.460155"
+        },
+        {
+          "currentValue": 56.9,
+          "historyAcquisitionTime": "2025-11-13T10:57:00.460155"
+        }
+      ]
+    }

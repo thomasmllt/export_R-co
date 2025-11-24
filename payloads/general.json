@@ -1,0 +1,148 @@
+{
+  "sensors": [
+    {
+      "sensorType": "TEMP_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": null,
+        "lon": null
+      },
+      "measurements": [
+        {
+          "currentValue": 24,
+          "historyAcquisitionTime": "2025-11-13T10:40:20.457931"
+        },
+        {
+          "currentValue": 24,
+          "historyAcquisitionTime": "2025-11-13T10:57:00.457931"
+        }
+      ]
+    },
+    {
+      "sensorType": "HUMIDITY_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": null,
+        "lon": null
+      },
+      "measurements": [
+        {
+          "currentValue": 57,
+          "historyAcquisitionTime": "2025-11-13T10:40:20.460155"
+        },
+        {
+          "currentValue": 56.9,
+          "historyAcquisitionTime": "2025-11-13T10:57:00.460155"
+        }
+      ]
+    },
+    {
+      "sensorType": "PRESSURE_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": null,
+        "lon": null
+      },
+      "measurements": [
+        {
+          "currentValue": 1003,
+          "historyAcquisitionTime": "2025-11-13T10:40:20.460942"
+        },
+        {
+          "currentValue": 1006,
+          "historyAcquisitionTime": "2025-11-13T10:57:00.460942"
+        }
+      ]
+    },
+    {
+      "sensorType": "GPS_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": 47.28214,
+        "lon": -1.520813
+      },
+      "measurements": []
+    },
+    {
+      "sensorType": "DUST_PM1_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": null,
+        "lon": null
+      },
+      "measurements": [
+        {
+          "currentValue": 20,
+          "historyAcquisitionTime": "2025-11-13T10:40:20.463235"
+        },
+        {
+          "currentValue": 10,
+          "historyAcquisitionTime": "2025-11-13T10:57:00.463235"
+        }
+      ]
+    },
+    {
+      "sensorType": "DUST_PM2_5_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": null,
+        "lon": null
+      },
+      "measurements": [
+        {
+          "currentValue": 20,
+          "historyAcquisitionTime": "2025-11-13T10:40:20.463642"
+        },
+        {
+          "currentValue": 10,
+          "historyAcquisitionTime": "2025-11-13T10:57:00.463642"
+        }
+      ]
+    },
+    {
+      "sensorType": "DUST_PM10_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": null,
+        "lon": null
+      },
+      "measurements": [
+        {
+          "currentValue": 20,
+          "historyAcquisitionTime": "2025-11-13T10:40:20.463680"
+        },
+        {
+          "currentValue": 10,
+          "historyAcquisitionTime": "2025-11-13T10:57:00.463680"
+        }
+      ]
+    },
+    {
+      "sensorType": "LIGHT_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": null,
+        "lon": null
+      },
+      "measurements": []
+    },
+    {
+      "sensorType": "CO2_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": null,
+        "lon": null
+      },
+      "measurements": [
+        {
+          "currentValue": 827,
+          "historyAcquisitionTime": "2025-11-13T10:40:20.477333"
+        },
+        {
+          "currentValue": 828,
+          "historyAcquisitionTime": "2025-11-13T10:57:00.477333"
+        }
+      ]
+    }
+  ]
+}
