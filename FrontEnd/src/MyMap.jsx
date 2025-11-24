@@ -131,6 +131,10 @@ function ClusterLayer({ points, setHoveredInfo }) {
                 <p>Température moyenne : {(feature.mesureT.reduce((sum, num) => sum + num, 0)*100 / feature.mesureT.length).toFixed(0)/100}</p>
                 <p>Humidité moyenne : {(feature.mesureH.reduce((sum, num) => sum + num, 0)*100 / feature.mesureH.length).toFixed(0)/100}</p>
                 <p>Pression moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
+                <p>Concentration de poussière PM1 moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
+                <p>Concentration de poussière PM2.5 moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
+                <p>Concentration de poussière PM10 moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
+                <p>Concentration de CO2 moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
                 
                 <span class="footer-info">Dernière modification : {lastmod.toLocaleDateString("fr-FR")}</span>
               </div>
@@ -156,7 +160,7 @@ export default function MyMap_test() {
   return (
     <div style={{display: "flex",justifyContent: "flex-end", alignItems: "flex-start", height: "100%",width: "100%",margin: 0, padding: 0,background: "#eee"}}>
       <title>Carte</title>
-      <div style={{ height : "100%",width: '20%', padding: '0px'}}>
+      <div style={{ height : "100%",width: '25%', padding: '0px'}}>
         {hoveredInfo ? hoveredInfo : <p>Survolez un marker</p>}
       </div>
       <MapContainer
@@ -165,7 +169,7 @@ export default function MyMap_test() {
         scrollWheelZoom={true}
         maxBounds={bounds}  
         maxBoundsViscosity={1}
-        style={{ height: "100vh", width: "80vw"}}
+        style={{ height: "100vh", width: "75vw"}}
       >
         {/*<TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{x}/{y}.png"
