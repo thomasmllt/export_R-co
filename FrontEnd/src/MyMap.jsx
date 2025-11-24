@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import * as EL from 'esri-leaflet';
 import L from "leaflet";
 import supercluster from "supercluster";
-import { markers } from "../src/markers";
+import { markers, puntos } from "./markers";
 const bounds = L.latLngBounds(
   [-85, -180], // Sud-Ouest
   [85, 180]    // Nord-Est
@@ -32,7 +32,7 @@ const customIcon = new L.Icon({
 const createClusterIcon = (count) =>
   L.divIcon({
     html: `<div style="
-      background:#2e7d32;
+      background:#e66347;
       color:white;
       border-radius:50%;
       width:40px;
@@ -45,17 +45,117 @@ const createClusterIcon = (count) =>
     ">${count}</div>`,
     className: "cluster-marker",
     iconSize: [40, 40],
-  });
+});
 
-export default function MyMap() {
+
+
+
+function ClusterLayer({ points, setHoveredInfo }) {
   const navigate = useNavigate();
-  const [hoveredInfo, setHoveredInfo] = useState(null);
+  const map = useMap();
+  const [bounds, setBounds] = useState(map.getBounds());
+  const [zoom, setZoom] = useState(map.getZoom());
   const handleMarkerClick = (id) => {
     // 🔹 Navigue vers la même page avec un paramètre
     navigate(`/details/${id}`);
   };
+
+  // Mets à jour les bounds & zoom quand on bouge
+  useEffect(() => {
+    const update = () => {
+      setBounds(map.getBounds());
+      setZoom(map.getZoom());
+    };
+    map.on("moveend", update);
+    return () => map.off("moveend", update);
+  }, [map]);
+
+  // Crée le cluster
+  const cluster = useMemo(() => {
+    const index =new supercluster({
+      radius: 60, // distance de regroupement (en pixels)
+      maxZoom: 18,
+    });
+    index.load(points);
+    return index;
+  }, [points]);
+
+  // Convertit les bounds Leaflet en bbox
+  const bbox = [
+    bounds.getWest(),
+    bounds.getSouth(),
+    bounds.getEast(),
+    bounds.getNorth(),
+  ];
+
+  // Récupère les clusters visibles
+  const clusters = cluster.getClusters(bbox, Math.round(zoom));
+  return (
+    <>
+      {clusters.map((feature) => {
+        const [longitude, latitude] = feature.geometry.coordinates;
+        const { cluster: isCluster, point_count: pointCount } = feature.properties;
+
+        if (isCluster) {
+          return (
+            <Marker
+              key={`cluster-${feature.id}`}
+              position={[latitude, longitude]}
+              icon={createClusterIcon(pointCount)}
+              eventHandlers={{
+                click: () => {
+                  const expansionZoom = Math.min(
+                    cluster.getClusterExpansionZoom(feature.id),
+                    18
+                  );
+                  map.setView([latitude, longitude], expansionZoom, { animate: true });
+                },
+              }}
+            />
+          );
+        }
+        const lastmod = new Date(feature.times[feature.times.length-1]);
+        return (
+          <Marker
+            key={`point-${feature.properties.id}`}
+            position={[latitude, longitude]}
+            icon={customIcon}  
+            eventHandlers={{
+            click: () => handleMarkerClick(feature.properties.id),
+            mouseover: () => setHoveredInfo(
+              <div class="container">
+                <p style={{ fontSize: "25px" }}>{feature.name}</p>
+                <p>Position GPS : {feature.geometry.coordinates.join(', ')}</p>
+                <p>{feature.description}</p>
+                <p>__________________________________________</p>
+                <p>Température moyenne : {(feature.mesureT.reduce((sum, num) => sum + num, 0)*100 / feature.mesureT.length).toFixed(0)/100}</p>
+                <p>Humidité moyenne : {(feature.mesureH.reduce((sum, num) => sum + num, 0)*100 / feature.mesureH.length).toFixed(0)/100}</p>
+                <p>Pression moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
+                
+                <span class="footer-info">Dernière modification : {lastmod.toLocaleDateString("fr-FR")}</span>
+              </div>
+            ),
+            mouseout: () => setHoveredInfo(null),
+          }}
+          >
+          </Marker>
+        );
+      })}
+    </>
+  );
+}
+
+
+
+
+
+
+
+export default function MyMap_test() {
+  const [hoveredInfo, setHoveredInfo] = useState(null);
   return (
     <div style={{display: "flex",justifyContent: "flex-end", alignItems: "flex-start", height: "100%",width: "100%",margin: 0, padding: 0,background: "#eee"}}>
+      <title>Carte</title>
       <div style={{ height : "100%",width: '20%', padding: '0px'}}>
         {hoveredInfo ? hoveredInfo : <p>Survolez un marker</p>}
       </div>
@@ -74,20 +174,7 @@ export default function MyMap() {
           detectRetina={false}
         />*/}
         <EsriImageryLayer />
-        {markers.map((m) => (
-          <Marker key={m.id} position={m.position} icon={customIcon} eventHandlers={{
-            click: () => handleMarkerClick(m.id),
-            mouseover: () => setHoveredInfo(
-              <div>
-                <p>{m.name}</p>
-                <p>Position GPS : {m.position.join(', ')}</p>
-              </div>
-            ),
-            mouseout: () => setHoveredInfo(null),
-          }}>
-            <Popup>{m.name}</Popup>
-          </Marker>
-        ))}
+        <ClusterLayer points={markers} setHoveredInfo={setHoveredInfo} />
       </MapContainer>
     </div>
   );
