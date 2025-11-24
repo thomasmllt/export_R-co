@@ -124,9 +124,11 @@ function ClusterLayer({ points, setHoveredInfo }) {
             click: () => handleMarkerClick(feature.properties.id),
             mouseover: () => setHoveredInfo(
               <div class="container">
+                <center>
                 <p style={{ fontSize: "25px" }}>{feature.name}</p>
                 <p>Position GPS : {feature.geometry.coordinates.join(', ')}</p>
                 <p>{feature.description}</p>
+                </center>
                 <p>_____________________________________________</p>
                 <p>Température moyenne : {(feature.mesureT.reduce((sum, num) => sum + num, 0)*100 / feature.mesureT.length).toFixed(0)/100}</p>
                 <p>Humidité moyenne : {(feature.mesureH.reduce((sum, num) => sum + num, 0)*100 / feature.mesureH.length).toFixed(0)/100}</p>
@@ -161,7 +163,7 @@ export default function MyMap_test() {
     <div style={{display: "flex",justifyContent: "flex-end", alignItems: "flex-start", height: "100%",width: "100%",margin: 0, padding: 0,background: "#eee"}}>
       <title>Carte</title>
       <div style={{ height : "100%",width: '25%', padding: '0px'}}>
-        {hoveredInfo ? hoveredInfo : <p>Survolez un marker</p>}
+        {hoveredInfo ? hoveredInfo : <center><p>Survolez un marker</p></center>}
       </div>
       <MapContainer
         center={[47, 2.3522]}
