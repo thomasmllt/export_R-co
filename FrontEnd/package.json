@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "chart.js": "^4.5.0",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^4.1.0",
     "esri-leaflet": "^3.0.19",
     "leaflet": "^1.9.4",
     "react": "^19.1.1",
