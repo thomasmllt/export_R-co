@@ -316,8 +316,9 @@ export default function DetailsPage() {
         </div>
         <div style={{ height: "100%", width: "15%", padding: "20px" }}></div>
         <div style={{ height: "100%", width: "50%", padding: "0px" }}>
-          <h1>Données de la balise {name}</h1>
+          <center><h1>Données de la balise {name}</h1>
           <h2>Données de test : {beaconName} </h2>
+          </center>
 
           {/* --- CONTRÔLES DE PÉRIODE --- */}
           <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
