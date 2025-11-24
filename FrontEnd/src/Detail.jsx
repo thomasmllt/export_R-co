@@ -52,6 +52,7 @@ export default function DetailsPage() {
   // offset = 0 : Période la plus récente
   // offset = 1 : Période précédente
   const [offset, setOffset] = React.useState(0); 
+  const [open, setOpen] = React.useState(false);
 
   const [beaconName, setBeaconName] = React.useState("Chargement...");
   const [tempData, setTempData] = React.useState([]);
@@ -290,7 +291,6 @@ export default function DetailsPage() {
     },
   };
 
-
   // --- Rendu ---
   return (
     <div>
@@ -322,26 +322,55 @@ export default function DetailsPage() {
 
           {/* --- CONTRÔLES DE PÉRIODE --- */}
           <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-            {/* Boutons de Durée (1D, 7D, 1M, ALL) */}
-            <div style={{ display: 'flex', gap: '5px', marginRight: '20px' }}>
-                {TIME_RANGES.map((range) => (
-                  <button
-                    key={range.key}
-                    onClick={() => {
+            
+            {/* Dropdown au lieu des boutons */}
+            <div style={{ position: "relative", display: "inline-block" }}>
+              <button
+                onClick={() => setOpen(!open)}
+                className="py-2 px-4 rounded-lg text-sm font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300"
+              >
+                {TIME_RANGES.find(r => r.key === timeRange)?.label ?? "Période"} ▼
+              </button>
+
+              {open && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    background: "white",
+                    border: "1px solid #ccc",
+                    padding: "8px",
+                    borderRadius: "8px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                    zIndex: 50,
+                    minWidth: "120px"
+                  }}
+                >
+                  {TIME_RANGES.map((range) => (
+                    <button
+                      key={range.key}
+                      onClick={() => {
                         setTimeRange(range.key);
-                        setOffset(0); // Réinitialiser l'offset lors du changement de durée
-                    }}
-                    className={`py-2 px-4 rounded-lg text-sm font-semibold transition-colors duration-150 ${
-                      timeRange === range.key
-                        ? "bg-blue-600 text-white shadow-lg"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    }`}
-                    disabled={range.key === 'ALL' && offset > 0} // Désactiver l'offset si 'Tout' est sélectionné
-                  >
-                    {range.label}
-                  </button>
-                ))}
+                        setOffset(0);
+                        setOpen(false); // Refermer le menu après sélection
+                      }}
+                      className={`py-2 px-4 rounded-lg text-sm font-semibold transition-colors duration-150 text-left ${
+                        timeRange === range.key
+                          ? "bg-blue-600 text-white shadow"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                      disabled={range.key === 'ALL' && offset > 0}
+                    >
+                      {range.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
 
             {/* Boutons de Navigation (< Précedent, Suivant >) */}
             {timeRange !== 'ALL' && (
