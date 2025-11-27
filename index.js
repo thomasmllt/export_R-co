@@ -1,5 +1,7 @@
-require('dotenv').config();
+const dns = require('node:dns');
+dns.setDefaultResultOrder('ipv4first');
 
+require('dotenv').config();
 const express = require("express");
 
 // Création de l’application Express
