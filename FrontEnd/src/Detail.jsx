@@ -274,7 +274,7 @@ export default function DetailsPage() {
       y: {
         title: {
           display: true,
-          text: "Pression (Pa)",
+          text: "Pression (hPa)",
         },
       },
       x: {
@@ -372,8 +372,6 @@ export default function DetailsPage() {
               </div>
             )}
           </div>
-
-
 
 
 
