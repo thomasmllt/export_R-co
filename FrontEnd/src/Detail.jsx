@@ -41,6 +41,11 @@ const TIME_RANGES = [
   { label: "Tout", key: "ALL" },
 ];
 
+const GRAPH_TYPES = [
+  { label: "Température",key: "temp"  },
+  {label: "Pression", key: "press"  }
+];
+
 export default function DetailsPage() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -53,6 +58,8 @@ export default function DetailsPage() {
   // offset = 1 : Période précédente
   const [offset, setOffset] = React.useState(0); 
   const [open, setOpen] = React.useState(false);
+  const [graphType, setGraphType] = React.useState("temp");
+  const [openGraphMenu, setOpenGraphMenu] = React.useState(false);
 
   const [beaconName, setBeaconName] = React.useState("Chargement...");
   const [tempData, setTempData] = React.useState([]);
@@ -106,7 +113,7 @@ export default function DetailsPage() {
         
         // Ajustement pour le filtre 1 jour (pour coller à minuit)
         if (range === '1D') {
-            minDate = startOfDay(offsetFunction(now, currentOffset + 1));
+            minDate = startOfDay(offsetFunction(now, currentOffset));
             maxDate = endOfDay(offsetFunction(now, currentOffset));
         }
 
@@ -320,6 +327,59 @@ export default function DetailsPage() {
           <h2>Données de test : {beaconName} </h2>
           </center>
 
+          {/* --- MENU TYPE DE GRAPHIQUE --- */}
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <button
+              onClick={() => setOpenGraphMenu(!openGraphMenu)}
+              className="py-2 px-4 rounded-lg text-sm font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300"
+            >
+              {GRAPH_TYPES.find(t => t.key === graphType)?.label} ▼
+            </button>
+
+            {openGraphMenu && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  background: "white",
+                  border: "1px solid #ccc",
+                  padding: "8px",
+                  borderRadius: "8px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  zIndex: 50,
+                  minWidth: "150px"
+                }}
+              >
+                {GRAPH_TYPES.map((type) => (
+                  <button
+                    key={type.key}
+                    onClick={() => {
+                      setGraphType(type.key);
+                      setOpenGraphMenu(false);
+                    }}
+                    className={`py-2 px-4 rounded-lg text-sm font-semibold text-left ${
+                      graphType === type.key
+                        ? "bg-blue-600 text-white shadow"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+
+
+
+
+
+
+
           {/* --- CONTRÔLES DE PÉRIODE --- */}
           <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
             
@@ -395,15 +455,9 @@ export default function DetailsPage() {
           {/* ----------------------------------- */}
 
           <center>
-            <Line data={dataT} options={optionsT} width={800} height={400} />
-          </center>
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <center>
-            <Line data={dataP} options={optionsP} width={800} height={400} />
+            {graphType === "temp" && <Line data={dataT} options={optionsT} width={800} height={400}/>}
+            {graphType === "press" && <Line data={dataP} options={optionsP} width={800} height={400} />}
+            
           </center>
         </div>
       </div>
