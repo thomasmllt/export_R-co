@@ -227,7 +227,7 @@ export default function DetailsPage() {
           unit: unit,
           tooltipFormat: "dd/MM/yyyy HH:mm",
           displayFormats: {
-            hour: "HH:mm",
+            hour: "dd/MM HH:mm",
             day: "dd/MM",
             month: "MMM yyyy",
           },
