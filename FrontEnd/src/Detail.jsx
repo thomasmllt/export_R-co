@@ -362,7 +362,7 @@ export default function DetailsPage() {
                           ? "bg-blue-600 text-white shadow"
                           : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                       }`}
-                      disabled={range.key === 'ALL' && offset > 0}
+                      /*disabled={range.key === 'ALL' && offset > 0}*/
                     >
                       {range.label}
                     </button>
