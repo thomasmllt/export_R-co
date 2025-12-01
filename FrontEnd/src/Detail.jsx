@@ -65,7 +65,9 @@ export default function DetailsPage() {
 
   const [referenceDate, setReferenceDate] = React.useState(new Date());
 
-  // --- Calcule les limites autour de referenceDate ---
+  /* ---------------------------------------------------
+        LIMITE TEMPS
+  ---------------------------------------------------- */
   const getTimeRangeLimits = React.useCallback(
     (range, refDate) => {
       if (range === "ALL") {
@@ -96,18 +98,19 @@ export default function DetailsPage() {
     []
   );
 
-  // --- Offset calculé
   const computeOffsetFromRef = (range, refDate) => {
     const now = new Date();
     if (range === "ALL") return 0;
     const diffMs = now.setHours(0, 0, 0, 0) - new Date(refDate).setHours(0, 0, 0, 0);
-    if (range === "1D") return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-    if (range === "7D") return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7)));
-    if (range === "1M") return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24 * 30)));
+    if (range === "1D") return Math.max(0, Math.floor(diffMs / 86400000));
+    if (range === "7D") return Math.max(0, Math.floor(diffMs / (86400000 * 7)));
+    if (range === "1M") return Math.max(0, Math.floor(diffMs / (86400000 * 30)));
     return 0;
   };
 
-  // --- Chargement des mesures ---
+  /* ---------------------------------------------------
+        FETCH DATA
+  ---------------------------------------------------- */
   React.useEffect(() => {
     async function fetchBeaconName() {
       try {
@@ -128,16 +131,6 @@ export default function DetailsPage() {
         const response = await fetch(`http://localhost:3000/measurement/${id}/1`);
         const data = await response.json();
         setTempData(data.map((d) => ({ x: new Date(d.timestamp), y: d.value })));
-        setLabelsTemp(
-          data.map((d) =>
-            new Date(d.timestamp).toLocaleString("fr-FR", {
-              hour: "2-digit",
-              minute: "2-digit",
-              day: "2-digit",
-              month: "2-digit",
-            })
-          )
-        );
       } catch (err) {
         console.error("Erreur temp :", err);
       }
@@ -148,16 +141,6 @@ export default function DetailsPage() {
         const response = await fetch(`http://localhost:3000/measurement/${id}/3`);
         const data = await response.json();
         setPressData(data.map((d) => ({ x: new Date(d.timestamp), y: d.value })));
-        setLabelsPress(
-          data.map((d) =>
-            new Date(d.timestamp).toLocaleString("fr-FR", {
-              hour: "2-digit",
-              minute: "2-digit",
-              day: "2-digit",
-              month: "2-digit",
-            })
-          )
-        );
       } catch (err) {
         console.error("Erreur pression :", err);
       }
@@ -167,18 +150,19 @@ export default function DetailsPage() {
     fetchPressure();
   }, [id]);
 
-  // --- NAVIGATION TEMPORELLE ---
+  /* ---------------------------------------------------
+        NAVIGATION TEMPORELLE
+  ---------------------------------------------------- */
   const handleTimeShift = (direction) => {
     let newRef = new Date(referenceDate);
 
-    if (timeRange === "1D") newRef = addDays(referenceDate, direction * 1);
-    else if (timeRange === "7D") newRef = addWeeks(referenceDate, direction * 1);
-    else if (timeRange === "1M") newRef = addMonths(referenceDate, direction * 1);
+    if (timeRange === "1D") newRef = addDays(referenceDate, direction);
+    else if (timeRange === "7D") newRef = addWeeks(referenceDate, direction);
+    else if (timeRange === "1M") newRef = addMonths(referenceDate, direction);
 
     setReferenceDate(newRef);
   };
 
-  // --- NOUVELLE FONCTION : changement d'échelle fiable ---
   const handleTimeRangeChange = (newRange) => {
     const oldRange = timeRange;
     const oldRef = new Date(referenceDate);
@@ -220,14 +204,45 @@ export default function DetailsPage() {
     setOpen(false);
   };
 
-  // --- Limites du graphique ---
-  const { min: minDate, max: maxDate, label: currentRangeLabel } = getTimeRangeLimits(
-    timeRange,
-    referenceDate
-  );
+  /* ---------------------------------------------------
+        CALCUL DES LIMITES X
+  ---------------------------------------------------- */
+  const { min: minDate, max: maxDate, label: currentRangeLabel } =
+    getTimeRangeLimits(timeRange, referenceDate);
   const unit = timeRange === "1D" ? "hour" : "day";
 
-  // --- Données graphiques ---
+  /* ---------------------------------------------------
+        CALCUL DES DONNÉES VISIBLES + Y MIN/MAX
+  ---------------------------------------------------- */
+  const visibleTemp = tempData.filter(
+    (p) => (!minDate || p.x >= minDate) && (!maxDate || p.x <= maxDate)
+  );
+
+  const visiblePress = pressData.filter(
+    (p) => (!minDate || p.x >= minDate) && (!maxDate || p.x <= maxDate)
+  );
+
+  function computeYBounds(data) {
+    if (!data || data.length === 0) return { min: 0, max: 1 };
+
+    const values = data.map((p) => p.y);
+    const minVal = Math.min(...values);
+    const maxVal = Math.max(...values);
+
+    const pad = (maxVal - minVal) * 0.1;
+
+    return {
+      min: minVal - pad,
+      max: maxVal + pad,
+    };
+  }
+
+  const { min: yMinT, max: yMaxT } = computeYBounds(visibleTemp);
+  const { min: yMinP, max: yMaxP } = computeYBounds(visiblePress);
+
+  /* ---------------------------------------------------
+        DONNÉES POUR CHARTJS
+  ---------------------------------------------------- */
   const dataT = {
     datasets: [
       {
@@ -244,21 +259,31 @@ export default function DetailsPage() {
   const optionsT = {
     responsive: false,
     plugins: {
-      legend: { display: false, position: "top" },
-      title: { display: true, text: `Courbe des mesures de température (${currentRangeLabel})` },
+      legend: { display: false },
+      title: {
+        display: true,
+        text: `Courbe des mesures de température (${currentRangeLabel})`,
+      },
     },
     scales: {
-      y: { title: { display: true, text: "Température (°C)" } },
+      y: {
+        min: yMinT,
+        max: yMaxT,
+        title: { display: true, text: "Température (°C)" },
+      },
       x: {
         type: "time",
         time: {
           unit: unit,
           tooltipFormat: "dd/MM/yyyy HH:mm",
-          displayFormats: { hour: "dd/MM HH:mm", day: "dd/MM", month: "MMM yyyy" },
+          displayFormats: {
+            hour: "dd/MM HH:mm",
+            day: "dd/MM",
+            month: "MMM yyyy",
+          },
         },
         min: minDate,
         max: maxDate,
-        title: { display: true, text: "Date et Heure de la Mesure" },
       },
     },
   };
@@ -279,42 +304,45 @@ export default function DetailsPage() {
   const optionsP = {
     responsive: false,
     plugins: {
-      legend: { display: false, position: "top" },
-      title: { display: true, text: `Courbe des mesures de pression (${currentRangeLabel})` },
+      legend: { display: false },
+      title: {
+        display: true,
+        text: `Courbe des mesures de pression (${currentRangeLabel})`,
+      },
     },
     scales: {
-      y: { title: { display: true, text: "Pression (hPa)" } },
+      y: {
+        min: yMinP,
+        max: yMaxP,
+        title: { display: true, text: "Pression (hPa)" },
+      },
       x: {
         type: "time",
         time: {
           unit: unit,
           tooltipFormat: "dd/MM/yyyy HH:mm",
-          displayFormats: { hour: "dd/MM HH:mm", day: "dd/MM", month: "MMM yyyy" },
+          displayFormats: {
+            hour: "dd/MM HH:mm",
+            day: "dd/MM",
+            month: "MMM yyyy",
+          },
         },
         min: minDate,
         max: maxDate,
-        title: { display: true, text: "Date et Heure de la Mesure" },
       },
     },
   };
 
   const derivedOffset = computeOffsetFromRef(timeRange, referenceDate);
 
+  /* ---------------------------------------------------
+        RENDER
+  ---------------------------------------------------- */
   return (
     <div>
       <title>{`Données balise ${name}`}</title>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-start",
-          alignItems: "flex-start",
-          height: "100%",
-          width: "100%",
-          margin: 0,
-          padding: 0,
-        }}
-      >
-        <div style={{ height: "100%", width: "5%", padding: "20px" }}>
+      <div style={{ display: "flex", justifyContent: "flex-start" }}>
+        <div style={{ width: "5%", padding: "20px" }}>
           <button
             onClick={() => navigate("/carte")}
             className="absolute top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
@@ -323,15 +351,15 @@ export default function DetailsPage() {
           </button>
         </div>
 
-        <div style={{ height: "100%", width: "15%", padding: "20px" }}></div>
+        <div style={{ width: "15%", padding: "20px" }}></div>
 
-        <div style={{ height: "100%", width: "50%", padding: "0px" }}>
+        <div style={{ width: "50%" }}>
           <center>
             <h1>Données de la balise {name}</h1>
             <h2>Données de test : {beaconName} </h2>
           </center>
 
-          {/* --- MENU TYPE DE GRAPHIQUE --- */}
+          {/* MENU SEL. GRAPHIQUE */}
           <div style={{ position: "relative", display: "inline-block" }}>
             <button
               onClick={() => setOpenGraphMenu(!openGraphMenu)}
@@ -377,8 +405,8 @@ export default function DetailsPage() {
             )}
           </div>
 
-          {/* --- CONTRÔLES DE PÉRIODE --- */}
-          <div style={{ marginBottom: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
+          {/* CONTRÔLE TEMPS */}
+          <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
             <div style={{ position: "relative", display: "inline-block" }}>
               <button
                 onClick={() => setOpen(!open)}
@@ -408,7 +436,7 @@ export default function DetailsPage() {
                     <button
                       key={range.key}
                       onClick={() => handleTimeRangeChange(range.key)}
-                      className={`py-2 px-4 rounded-lg text-sm font-semibold transition-colors duration-150 text-left ${
+                      className={`py-2 px-4 rounded-lg text-sm font-semibold text-left ${
                         timeRange === range.key
                           ? "bg-blue-600 text-white shadow"
                           : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -425,13 +453,14 @@ export default function DetailsPage() {
               <div style={{ display: "flex", gap: "5px" }}>
                 <button
                   onClick={() => handleTimeShift(-1)}
-                  className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold transition-colors duration-150"
+                  className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold"
                 >
                   &lt; Précédent
                 </button>
+
                 <button
                   onClick={() => handleTimeShift(1)}
-                  className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold transition-colors duration-150"
+                  className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold"
                   disabled={derivedOffset === 0}
                 >
                   Suivant &gt;
@@ -440,9 +469,15 @@ export default function DetailsPage() {
             )}
           </div>
 
+          {/* GRAPHIQUE */}
           <center>
-            {graphType === "temp" && <Line data={dataT} options={optionsT} width={800} height={400} />}
-            {graphType === "press" && <Line data={dataP} options={optionsP} width={800} height={400} />}
+            {graphType === "temp" && (
+              <Line data={dataT} options={optionsT} width={800} height={400} />
+            )}
+
+            {graphType === "press" && (
+              <Line data={dataP} options={optionsP} width={800} height={400} />
+            )}
           </center>
         </div>
       </div>
