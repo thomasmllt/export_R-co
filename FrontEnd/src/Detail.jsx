@@ -60,6 +60,13 @@ export default function DetailsPage() {
   const [beaconName, setBeaconName] = React.useState("Chargement...");
   const [tempData, setTempData] = React.useState([]);
   const [pressData, setPressData] = React.useState([]);
+  const [humidityData, setHumidityData] = React.useState([]);
+  const [pm1Data, setPM1Data] = React.useState([]);
+  const [pm25Data, setPM25Data] = React.useState([]);
+  const [pm10Data, setPM10Data] = React.useState([]);
+  const [lightData, setLightData] = React.useState([]);
+  const [co2Data, setCO2Data] = React.useState([]);
+  const [gpsData, setGPSData] = React.useState([]);
   const [labelsTemp, setLabelsTemp] = React.useState([]);
   const [labelsPress, setLabelsPress] = React.useState([]);
 
@@ -122,50 +129,38 @@ export default function DetailsPage() {
     fetchBeaconName();
   }, [id]);
 
-  React.useEffect(() => {
-    async function fetchTemperature() {
-      try {
-        const response = await fetch(`http://localhost:3000/measurement/${id}/1`);
-        const data = await response.json();
-        setTempData(data.map((d) => ({ x: new Date(d.timestamp), y: d.value })));
-        setLabelsTemp(
-          data.map((d) =>
-            new Date(d.timestamp).toLocaleString("fr-FR", {
-              hour: "2-digit",
-              minute: "2-digit",
-              day: "2-digit",
-              month: "2-digit",
-            })
-          )
-        );
-      } catch (err) {
-        console.error("Erreur temp :", err);
-      }
+  // Structure pour définir les setters et l'URL pour chaque mesure
+    const MEASUREMENT_MAPPINGS = [
+        { id: 1, setter: setTempData, error: "Erreur temp" },
+        { id: 2, setter: setHumidityData, error: "Erreur humidité" },
+        { id: 3, setter: setPressData, error: "Erreur pression" },
+        // NOTE: setPressData est écrasé ci-dessous si vous ne changez pas les IDs !
+        { id: 5, setter: setPM1Data, error: "Erreur PM1" },
+        { id: 6, setter: setPM25Data, error: "Erreur PM2.5" },
+        { id: 7, setter: setPM10Data, error: "Erreur PM10" },
+        { id: 8, setter: setLightData, error: "Erreur Lumière" },
+        { id: 9, setter: setCO2Data, error: "Erreur CO2" },
+        { id: 10, setter: setGPSData, error: "Erreur GPS" },
+    ];
+
+    async function fetchAllMeasurements() {
+        for (const { id: measurementId, setter, error } of MEASUREMENT_MAPPINGS) {
+            try {
+                const response = await fetch(`http://localhost:3000/measurement/${id}/${measurementId}`);
+                const data = await response.json();
+                
+                // Le format est { x: Date, y: Valeur } pour Chart.js avec TimeScale
+                const formattedData = data.map((d) => ({ x: new Date(d.timestamp), y: d.value }));
+                setter(formattedData);
+            } catch (err) {
+                console.error(error + " :", err);
+            }
+        }
     }
 
-    async function fetchPressure() {
-      try {
-        const response = await fetch(`http://localhost:3000/measurement/${id}/3`);
-        const data = await response.json();
-        setPressData(data.map((d) => ({ x: new Date(d.timestamp), y: d.value })));
-        setLabelsPress(
-          data.map((d) =>
-            new Date(d.timestamp).toLocaleString("fr-FR", {
-              hour: "2-digit",
-              minute: "2-digit",
-              day: "2-digit",
-              month: "2-digit",
-            })
-          )
-        );
-      } catch (err) {
-        console.error("Erreur pression :", err);
-      }
-    }
+    fetchAllMeasurements();
 
-    fetchTemperature();
-    fetchPressure();
-  }, [id]);
+    }, [id]); // Dépendance à 'id' correcte
 
   // --- NAVIGATION TEMPORELLE ---
   const handleTimeShift = (direction) => {
