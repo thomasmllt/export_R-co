@@ -15,9 +15,9 @@ import {
   subDays,
   subWeeks,
   subMonths,
-  addDays, // NOUVEAU
-  addWeeks, // NOUVEAU
-  addMonths, // NOUVEAU
+  addDays,
+  addWeeks,
+  addMonths,
   startOfDay,
   endOfDay,
 } from "date-fns";
@@ -42,8 +42,8 @@ const TIME_RANGES = [
 ];
 
 const GRAPH_TYPES = [
-  { label: "Température",key: "temp"  },
-  {label: "Pression", key: "press"  }
+  { label: "Température", key: "temp" },
+  { label: "Pression", key: "press" },
 ];
 
 export default function DetailsPage() {
@@ -51,15 +51,11 @@ export default function DetailsPage() {
   const { id } = useParams();
   const marker = markers.find((m) => m.properties.id == id);
   const name = marker ? marker.name : "Unknown";
-  // On donne l'état d'affichage par défaut des valeurs
+
   const [timeRange, setTimeRange] = React.useState("ALL");
-  // --- NOUVEL ÉTAT pour l'offset temporel ---
-  // offset = 0 : Période la plus récente
-  // offset = 1 : Période précédente
-  const [offset, setOffset] = React.useState(0); 
-  const [open, setOpen] = React.useState(false);
   const [graphType, setGraphType] = React.useState("temp");
   const [openGraphMenu, setOpenGraphMenu] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
 
   const [beaconName, setBeaconName] = React.useState("Chargement...");
   const [tempData, setTempData] = React.useState([]);
@@ -67,140 +63,171 @@ export default function DetailsPage() {
   const [labelsTemp, setLabelsTemp] = React.useState([]);
   const [labelsPress, setLabelsPress] = React.useState([]);
 
-  // --- Fonction pour calculer les bornes temporelles (MISE À JOUR) ---
+  const [referenceDate, setReferenceDate] = React.useState(new Date());
+
+  // --- Calcule les limites autour de referenceDate ---
   const getTimeRangeLimits = React.useCallback(
-    (range, currentOffset) => {
-      // Date de référence (aujourd'hui)
-      let now = new Date(); 
-
-      // On décale la date de référence si l'offset n'est pas 0.
-      // Si l'offset est 1, on calcule la période 1D/7D/1M avant la période actuelle.
-      let offsetFunction = subDays;
-      let offsetAmount = 0;
-
-      switch (range) {
-        case "1D":
-          offsetFunction = subDays;
-          offsetAmount = currentOffset;
-          break;
-        case "7D":
-          offsetFunction = subWeeks;
-          offsetAmount = currentOffset;
-          break;
-        case "1M":
-          offsetFunction = subMonths;
-          offsetAmount = currentOffset;
-          break;
-        case "ALL":
-        default:
-          return { min: undefined, max: undefined, label: "Tout" };
+    (range, refDate) => {
+      if (range === "ALL") {
+        return { min: undefined, max: undefined, label: "Tout" };
       }
 
-      // La borne maximale est toujours la fin de la période actuelle (décalée)
-      let maxDate = now;
-      let minDate;
+      let minDate, maxDate;
 
-      if (currentOffset > 0) {
-        // Décalage pour voir le passé : l'offset décale le point de départ de la période.
-        // ex: pour offset=1 (période précédente), maxDate = now - 1 * période
-        // On calcule la fin de la période (maxDate) et le début de la période (minDate)
-        
-        // 1. Calcul de la date de FIN de la période affichée (ex: fin de la semaine dernière)
-        maxDate = offsetFunction(now, currentOffset); 
-
-        // 2. Calcul de la date de DÉBUT de la période affichée (ex: début de la semaine dernière)
-        minDate = offsetFunction(now, currentOffset + 1);
-        
-        // Ajustement pour le filtre 1 jour (pour coller à minuit)
-        if (range === '1D') {
-            minDate = startOfDay(offsetFunction(now, currentOffset));
-            maxDate = endOfDay(offsetFunction(now, currentOffset));
-        }
-
-      } else {
-        // offset = 0 : Période actuelle (la plus récente)
-        switch (range) {
-            case '1D':
-                minDate = startOfDay(now); // Commence à 00:00:00 du jour courant
-                break;
-            case '7D':
-                minDate = subWeeks(now, 1);
-                break;
-            case '1M':
-                minDate = subMonths(now, 1);
-                break;
-            default:
-                break;
-        }
-        maxDate = now; // La borne max est "maintenant"
+      if (range === "1D") {
+        minDate = startOfDay(refDate);
+        maxDate = endOfDay(refDate);
+      } else if (range === "7D") {
+        const d = new Date(refDate);
+        const day = d.getDay();
+        const daysFromMonday = day === 0 ? 6 : day - 1;
+        const monday = startOfDay(subDays(d, daysFromMonday));
+        minDate = monday;
+        maxDate = endOfDay(addDays(monday, 6));
+      } else if (range === "1M") {
+        const d = new Date(refDate);
+        minDate = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0);
+        maxDate = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
       }
-      
-      const rangeLabel = TIME_RANGES.find(r => r.key === range).label;
-      const displayLabel = currentOffset === 0 ? rangeLabel : `${rangeLabel} (Passé: ${currentOffset})`;
-      
-      return { min: minDate, max: maxDate, label: displayLabel };
+
+      const rangeLabel = TIME_RANGES.find((r) => r.key === range)?.label ?? range;
+      return { min: minDate, max: maxDate, label: rangeLabel };
     },
     []
   );
 
-  // --- Chargement des Mesures (code inchangé) ---
+  // --- Offset calculé
+  const computeOffsetFromRef = (range, refDate) => {
+    const now = new Date();
+    if (range === "ALL") return 0;
+    const diffMs = now.setHours(0, 0, 0, 0) - new Date(refDate).setHours(0, 0, 0, 0);
+    if (range === "1D") return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    if (range === "7D") return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7)));
+    if (range === "1M") return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24 * 30)));
+    return 0;
+  };
+
+  // --- Chargement des mesures ---
   React.useEffect(() => {
-      async function fetchBeaconName() {
-        try {
-          const response = await fetch(`http://localhost:3000/beacon/${id}/name`);
-          const data = await response.json();
-          setBeaconName(data.name);
-        } catch (error) {
-          console.error("Erreur backend :", error);
-          setBeaconName("Erreur lors du chargement");
-        }
+    async function fetchBeaconName() {
+      try {
+        const response = await fetch(`http://localhost:3000/beacon/${id}/name`);
+        const data = await response.json();
+        setBeaconName(data.name);
+      } catch (error) {
+        console.error("Erreur backend :", error);
+        setBeaconName("Erreur lors du chargement");
       }
-  
-      fetchBeaconName();
-    }, [id]);
+    }
+    fetchBeaconName();
+  }, [id]);
 
   React.useEffect(() => {
-    // ... fetchTemperature et fetchPressure (code inchangé pour le chargement des données brutes)
-    async function fetchTemperature() { 
-        try {
-            const response = await fetch(`http://localhost:3000/measurement/${id}/1`);
-            const data = await response.json();
-            setTempData(data.map((d) => ({ x: new Date(d.timestamp), y: d.value })));
-            setLabelsTemp(data.map((d) => new Date(d.timestamp).toLocaleString("fr-FR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })));
-        } catch (err) {
-            console.error("Erreur temp :", err);
-        }
+    async function fetchTemperature() {
+      try {
+        const response = await fetch(`http://localhost:3000/measurement/${id}/1`);
+        const data = await response.json();
+        setTempData(data.map((d) => ({ x: new Date(d.timestamp), y: d.value })));
+        setLabelsTemp(
+          data.map((d) =>
+            new Date(d.timestamp).toLocaleString("fr-FR", {
+              hour: "2-digit",
+              minute: "2-digit",
+              day: "2-digit",
+              month: "2-digit",
+            })
+          )
+        );
+      } catch (err) {
+        console.error("Erreur temp :", err);
+      }
     }
 
-    async function fetchPressure() { 
-        try {
-            const response = await fetch(`http://localhost:3000/measurement/${id}/3`);
-            const data = await response.json();
-            setPressData(data.map((d) => ({ x: new Date(d.timestamp), y: d.value })));
-            setLabelsPress(data.map((d) => new Date(d.timestamp).toLocaleString("fr-FR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })));
-        } catch (err) {
-            console.error("Erreur pression :", err);
-        }
+    async function fetchPressure() {
+      try {
+        const response = await fetch(`http://localhost:3000/measurement/${id}/3`);
+        const data = await response.json();
+        setPressData(data.map((d) => ({ x: new Date(d.timestamp), y: d.value })));
+        setLabelsPress(
+          data.map((d) =>
+            new Date(d.timestamp).toLocaleString("fr-FR", {
+              hour: "2-digit",
+              minute: "2-digit",
+              day: "2-digit",
+              month: "2-digit",
+            })
+          )
+        );
+      } catch (err) {
+        console.error("Erreur pression :", err);
+      }
     }
 
     fetchTemperature();
     fetchPressure();
   }, [id]);
 
-  // --- Calcul des limites en fonction du filtre et de l'offset ---
-  const { min: minDate, max: maxDate, label: currentRangeLabel } = getTimeRangeLimits(timeRange, offset);
-  const unit = timeRange === "1D" ? "hour" : "day";
-  
-  // --- Fonction pour changer la période (Avancer/Reculer) ---
+  // --- NAVIGATION TEMPORELLE ---
   const handleTimeShift = (direction) => {
-      // direction: +1 pour aller vers le passé (offset augmente), -1 pour aller vers le futur (offset diminue)
-      // On empêche d'aller au-delà de l'offset 0 (le futur)
-      setOffset((prevOffset) => Math.max(0, prevOffset + direction));
+    let newRef = new Date(referenceDate);
+
+    if (timeRange === "1D") newRef = addDays(referenceDate, direction * 1);
+    else if (timeRange === "7D") newRef = addWeeks(referenceDate, direction * 1);
+    else if (timeRange === "1M") newRef = addMonths(referenceDate, direction * 1);
+
+    setReferenceDate(newRef);
   };
 
+  // --- NOUVELLE FONCTION : changement d'échelle fiable ---
+  const handleTimeRangeChange = (newRange) => {
+    const oldRange = timeRange;
+    const oldRef = new Date(referenceDate);
 
-  // --- Configuration des Données et Options (utilisation de minDate/maxDate) ---
+    let anchor = new Date(oldRef);
 
+    if (oldRange === "7D") {
+      const day = anchor.getDay();
+      const diffToMonday = (day + 6) % 7;
+      anchor.setDate(anchor.getDate() - diffToMonday);
+    }
+
+    if (oldRange === "1M") {
+      anchor = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+    }
+
+    if (oldRange === "1D") {
+      anchor = startOfDay(anchor);
+    }
+
+    let newRef = new Date(anchor);
+
+    if (newRange === "7D") {
+      const day = newRef.getDay();
+      const diffToMonday = (day + 6) % 7;
+      newRef.setDate(newRef.getDate() - diffToMonday);
+    }
+
+    if (newRange === "1M") {
+      newRef = new Date(newRef.getFullYear(), newRef.getMonth(), 1);
+    }
+
+    if (newRange === "1D") {
+      newRef = startOfDay(newRef);
+    }
+
+    setTimeRange(newRange);
+    setReferenceDate(newRef);
+    setOpen(false);
+  };
+
+  // --- Limites du graphique ---
+  const { min: minDate, max: maxDate, label: currentRangeLabel } = getTimeRangeLimits(
+    timeRange,
+    referenceDate
+  );
+  const unit = timeRange === "1D" ? "hour" : "day";
+
+  // --- Données graphiques ---
   const dataT = {
     datasets: [
       {
@@ -218,38 +245,23 @@ export default function DetailsPage() {
     responsive: false,
     plugins: {
       legend: { display: false, position: "top" },
-      // Utilisation du label pour indiquer la période
-      title: { display: true, text: `Courbe des mesures de température (${currentRangeLabel})` }, 
+      title: { display: true, text: `Courbe des mesures de température (${currentRangeLabel})` },
     },
     scales: {
-      y: {
-        title: {
-          display: true,
-          text: "Température (°C)",
-        },
-      },
+      y: { title: { display: true, text: "Température (°C)" } },
       x: {
         type: "time",
         time: {
           unit: unit,
           tooltipFormat: "dd/MM/yyyy HH:mm",
-          displayFormats: {
-            hour: "dd/MM HH:mm",
-            day: "dd/MM",
-            month: "MMM yyyy",
-          },
+          displayFormats: { hour: "dd/MM HH:mm", day: "dd/MM", month: "MMM yyyy" },
         },
         min: minDate,
         max: maxDate,
-        title: {
-          display: true,
-          text: "Date et Heure de la Mesure",
-        },
+        title: { display: true, text: "Date et Heure de la Mesure" },
       },
     },
   };
-
-  // ... (optionsP similaires)
 
   const dataP = {
     datasets: [
@@ -271,34 +283,23 @@ export default function DetailsPage() {
       title: { display: true, text: `Courbe des mesures de pression (${currentRangeLabel})` },
     },
     scales: {
-      y: {
-        title: {
-          display: true,
-          text: "Pression (hPa)",
-        },
-      },
+      y: { title: { display: true, text: "Pression (hPa)" } },
       x: {
         type: "time",
         time: {
           unit: unit,
           tooltipFormat: "dd/MM/yyyy HH:mm",
-          displayFormats: {
-            hour: "HH:mm",
-            day: "dd/MM",
-            month: "MMM yyyy",
-          },
+          displayFormats: { hour: "dd/MM HH:mm", day: "dd/MM", month: "MMM yyyy" },
         },
         min: minDate,
         max: maxDate,
-        title: {
-          display: true,
-          text: "Date et Heure de la Mesure",
-        },
+        title: { display: true, text: "Date et Heure de la Mesure" },
       },
     },
   };
 
-  // --- Rendu ---
+  const derivedOffset = computeOffsetFromRef(timeRange, referenceDate);
+
   return (
     <div>
       <title>{`Données balise ${name}`}</title>
@@ -321,10 +322,13 @@ export default function DetailsPage() {
             Retour à la carte
           </button>
         </div>
+
         <div style={{ height: "100%", width: "15%", padding: "20px" }}></div>
+
         <div style={{ height: "100%", width: "50%", padding: "0px" }}>
-          <center><h1>Données de la balise {name}</h1>
-          <h2>Données de test : {beaconName} </h2>
+          <center>
+            <h1>Données de la balise {name}</h1>
+            <h2>Données de test : {beaconName} </h2>
           </center>
 
           {/* --- MENU TYPE DE GRAPHIQUE --- */}
@@ -333,7 +337,7 @@ export default function DetailsPage() {
               onClick={() => setOpenGraphMenu(!openGraphMenu)}
               className="py-2 px-4 rounded-lg text-sm font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300"
             >
-              {GRAPH_TYPES.find(t => t.key === graphType)?.label} ▼
+              {GRAPH_TYPES.find((t) => t.key === graphType)?.label} ▼
             </button>
 
             {openGraphMenu && (
@@ -350,7 +354,7 @@ export default function DetailsPage() {
                   flexDirection: "column",
                   gap: "6px",
                   zIndex: 50,
-                  minWidth: "150px"
+                  minWidth: "150px",
                 }}
               >
                 {GRAPH_TYPES.map((type) => (
@@ -373,21 +377,14 @@ export default function DetailsPage() {
             )}
           </div>
 
-
-
-
-
-
           {/* --- CONTRÔLES DE PÉRIODE --- */}
-          <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-            
-            {/* Dropdown au lieu des boutons */}
+          <div style={{ marginBottom: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
             <div style={{ position: "relative", display: "inline-block" }}>
               <button
                 onClick={() => setOpen(!open)}
                 className="py-2 px-4 rounded-lg text-sm font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300"
               >
-                {TIME_RANGES.find(r => r.key === timeRange)?.label ?? "Période"} ▼
+                {TIME_RANGES.find((r) => r.key === timeRange)?.label ?? "Période"} ▼
               </button>
 
               {open && (
@@ -404,23 +401,18 @@ export default function DetailsPage() {
                     flexDirection: "column",
                     gap: "6px",
                     zIndex: 50,
-                    minWidth: "120px"
+                    minWidth: "120px",
                   }}
                 >
                   {TIME_RANGES.map((range) => (
                     <button
                       key={range.key}
-                      onClick={() => {
-                        setTimeRange(range.key);
-                        setOffset(0);
-                        setOpen(false); // Refermer le menu après sélection
-                      }}
+                      onClick={() => handleTimeRangeChange(range.key)}
                       className={`py-2 px-4 rounded-lg text-sm font-semibold transition-colors duration-150 text-left ${
                         timeRange === range.key
                           ? "bg-blue-600 text-white shadow"
                           : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                       }`}
-                      /*disabled={range.key === 'ALL' && offset > 0}*/
                     >
                       {range.label}
                     </button>
@@ -429,33 +421,28 @@ export default function DetailsPage() {
               )}
             </div>
 
-
-            {/* Boutons de Navigation (< Précedent, Suivant >) */}
-            {timeRange !== 'ALL' && (
-                <div style={{ display: 'flex', gap: '5px' }}>
-                    <button
-                        onClick={() => handleTimeShift(1)} // Augmenter l'offset (aller dans le passé)
-                        className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold transition-colors duration-150"
-                    >
-                        &lt; Précédent
-                    </button>
-                    <button
-                        onClick={() => handleTimeShift(-1)} // Diminuer l'offset (aller dans le futur)
-                        className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold transition-colors duration-150"
-                        disabled={offset === 0} // Désactivé si on est déjà à la période la plus récente
-                    >
-                        Suivant &gt;
-                    </button>
-                </div>
+            {timeRange !== "ALL" && (
+              <div style={{ display: "flex", gap: "5px" }}>
+                <button
+                  onClick={() => handleTimeShift(-1)}
+                  className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold transition-colors duration-150"
+                >
+                  &lt; Précédent
+                </button>
+                <button
+                  onClick={() => handleTimeShift(1)}
+                  className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold transition-colors duration-150"
+                  disabled={derivedOffset === 0}
+                >
+                  Suivant &gt;
+                </button>
+              </div>
             )}
-            
           </div>
-          {/* ----------------------------------- */}
 
           <center>
-            {graphType === "temp" && <Line data={dataT} options={optionsT} width={800} height={400}/>}
+            {graphType === "temp" && <Line data={dataT} options={optionsT} width={800} height={400} />}
             {graphType === "press" && <Line data={dataP} options={optionsP} width={800} height={400} />}
-            
           </center>
         </div>
       </div>
