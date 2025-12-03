@@ -34,6 +34,7 @@ ChartJS.register(
   TimeScale
 );
 
+// --- Définitions ---
 const TIME_RANGES = [
   { label: "1 Jour", key: "1D" },
   { label: "1 Semaine", key: "7D" },
@@ -42,9 +43,29 @@ const TIME_RANGES = [
 ];
 
 const GRAPH_TYPES = [
-  { label: "Température", key: "temp" },
-  { label: "Pression", key: "press" },
+  { label: "Température", key: "temp", measurementId: 1, unit: "°C", color: "#3b82f6" },
+  { label: "Humidité", key: "humidity", measurementId: 2, unit: "%", color: "#10b981" },
+  { label: "Pression", key: "press", measurementId: 3, unit: "hPa", color: "#f63b3bff" },
+  { label: "PM 1.0", key: "pm1", measurementId: 4, unit: "µg/m³", color: "#f59e0b" },
+  { label: "PM 2.5", key: "pm25", measurementId: 5, unit: "µg/m³", color: "#f97316" },
+  { label: "PM 10", key: "pm10", measurementId: 6, unit: "µg/m³", color: "#d97706" },
+  { label: "Luminosité", key: "light", measurementId: 7, unit: "lux", color: "#a855f7" },
+  { label: "CO2", key: "co2", measurementId: 8, unit: "ppm", color: "#ef4444" },
+  // NOTE: GPS (measurementId: 9) est un cas spécial (lat/lng) et n'est pas pris en charge par Line chart
 ];
+
+// Mappage des clés de type de graphique aux noms de l'état
+const DATA_STATE_KEYS = {
+    "temp": "tempData",
+    "humidity": "humidityData",
+    "press": "pressData",
+    "pm1": "pm1Data",
+    "pm25": "pm25Data",
+    "pm10": "pm10Data",
+    "light": "lightData",
+    "co2": "co2Data",
+};
+
 
 export default function DetailsPage() {
   const navigate = useNavigate();
@@ -58,17 +79,16 @@ export default function DetailsPage() {
   const [open, setOpen] = React.useState(false);
 
   const [beaconName, setBeaconName] = React.useState("Chargement...");
+  // États pour les données
   const [tempData, setTempData] = React.useState([]);
-  const [pressData, setPressData] = React.useState([]);
   const [humidityData, setHumidityData] = React.useState([]);
+  const [pressData, setPressData] = React.useState([]);
   const [pm1Data, setPM1Data] = React.useState([]);
   const [pm25Data, setPM25Data] = React.useState([]);
   const [pm10Data, setPM10Data] = React.useState([]);
   const [lightData, setLightData] = React.useState([]);
   const [co2Data, setCO2Data] = React.useState([]);
-  const [gpsData, setGPSData] = React.useState([]);
-  const [labelsTemp, setLabelsTemp] = React.useState([]);
-  const [labelsPress, setLabelsPress] = React.useState([]);
+  const [gpsData, setGPSData] = React.useState([]); // Non utilisé pour Line chart, mais gardé
 
   const [referenceDate, setReferenceDate] = React.useState(new Date());
 
@@ -77,6 +97,7 @@ export default function DetailsPage() {
   ---------------------------------------------------- */
   const getTimeRangeLimits = React.useCallback(
     (range, refDate) => {
+      // ... (inchangé)
       if (range === "ALL") {
         return { min: undefined, max: undefined, label: "Tout" };
       }
@@ -106,6 +127,7 @@ export default function DetailsPage() {
   );
 
   const computeOffsetFromRef = (range, refDate) => {
+    // ... (inchangé)
     const now = new Date();
     if (range === "ALL") return 0;
     const diffMs = now.setHours(0, 0, 0, 0) - new Date(refDate).setHours(0, 0, 0, 0);
@@ -120,6 +142,7 @@ export default function DetailsPage() {
   ---------------------------------------------------- */
   React.useEffect(() => {
     async function fetchBeaconName() {
+      // ... (inchangé)
       try {
         const response = await fetch(`http://localhost:3000/beacon/${id}/name`);
         const data = await response.json();
@@ -133,54 +156,47 @@ export default function DetailsPage() {
   }, [id]);
 
   React.useEffect(() => {
-    async function fetchTemperature() {
-      try {
-        const response = await fetch(`http://localhost:3000/measurement/${id}/1`);
-        const data = await response.json();
-        setTempData(data.map((d) => ({ x: new Date(d.timestamp), y: d.value })));
-        setLabelsTemp(
-          data.map((d) =>
-            new Date(d.timestamp).toLocaleString("fr-FR", {
-              hour: "2-digit",
-              minute: "2-digit",
-              day: "2-digit",
-              month: "2-digit",
-            })
-          )
-        );
-      } catch (err) {
-        console.error("Erreur temp :", err);
-      }
+    // Mappage de toutes les mesures à récupérer avec leur setter d'état correspondant
+    const MEASUREMENT_MAPPINGS = [
+        { id: 1, setter: setTempData, error: "Erreur temp" },
+        { id: 2, setter: setHumidityData, error: "Erreur humidité" },
+        { id: 3, setter: setPressData, error: "Erreur pression" },
+        { id: 4, setter: setPM1Data, error: "Erreur PM 1.0" },
+        { id: 5, setter: setPM25Data, error: "Erreur PM 2.5" },
+        { id: 6, setter: setPM10Data, error: "Erreur PM 10" },
+        { id: 7, setter: setLightData, error: "Erreur luminosité" },
+        { id: 8, setter: setCO2Data, error: "Erreur CO2" },
+        { id: 9, setter: setGPSData, error: "Erreur GPS" }, // Non utilisé pour Line Chart
+    ];
+
+    async function fetchAllMeasurements() {
+        // Exécution des requêtes en parallèle (ou séquentiellement si le backend est sensible)
+        const fetchPromises = MEASUREMENT_MAPPINGS.map(async ({ id: measurementId, setter, error }) => {
+            try {
+                const response = await fetch(`http://localhost:3000/measurement/${id}/${measurementId}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                
+                // Formate les données pour TimeScale: {x: Date, y: value}
+                const formattedData = data.map((d) => ({ x: new Date(d.timestamp), y: d.value }));
+                setter(formattedData);
+            } catch (err) {
+                console.error(error + " :", err);
+                setter([]); // Vider les données en cas d'erreur
+            }
+        });
+        
+        await Promise.all(fetchPromises);
     }
 
-    async function fetchPressure() {
-      try {
-        const response = await fetch(`http://localhost:3000/measurement/${id}/3`);
-        const data = await response.json();
-        setPressData(data.map((d) => ({ x: new Date(d.timestamp), y: d.value })));
-        setLabelsPress(
-          data.map((d) =>
-            new Date(d.timestamp).toLocaleString("fr-FR", {
-              hour: "2-digit",
-              minute: "2-digit",
-              day: "2-digit",
-              month: "2-digit",
-            })
-          )
-        );
-      } catch (err) {
-        console.error("Erreur pression :", err);
-      }
-    }
-
-    fetchTemperature();
-    fetchPressure();
-  }, [id]);
+    fetchAllMeasurements();
+  }, [id]); // Dépendance à 'id' pour re-fetch si la balise change
 
   /* ---------------------------------------------------
         NAVIGATION TEMPORELLE
   ---------------------------------------------------- */
   const handleTimeShift = (direction) => {
+    // ... (inchangé)
     let newRef = new Date(referenceDate);
 
     if (timeRange === "1D") newRef = addDays(referenceDate, direction);
@@ -191,6 +207,7 @@ export default function DetailsPage() {
   };
 
   const handleTimeRangeChange = (newRange) => {
+    // ... (inchangé)
     const oldRange = timeRange;
     const oldRef = new Date(referenceDate);
 
@@ -239,126 +256,106 @@ export default function DetailsPage() {
   const unit = timeRange === "1D" ? "hour" : "day";
 
   /* ---------------------------------------------------
-        CALCUL DES DONNÉES VISIBLES + Y MIN/MAX
+        FONCTIONS UTILITAIRES DE GRAPHIQUE
   ---------------------------------------------------- */
-  const visibleTemp = tempData.filter(
-    (p) => (!minDate || p.x >= minDate) && (!maxDate || p.x <= maxDate)
-  );
 
-  const visiblePress = pressData.filter(
-    (p) => (!minDate || p.x >= minDate) && (!maxDate || p.x <= maxDate)
-  );
-
-  function computeYBounds(data) {
+  // Fonction pour calculer les bornes Y, déplacée ici pour être utilisée comme dépendance
+  const computeYBounds = React.useCallback((data) => {
     if (!data || data.length === 0) return { min: 0, max: 1 };
 
     const values = data.map((p) => p.y);
     const minVal = Math.min(...values);
     const maxVal = Math.max(...values);
 
+    // Ajouter un padding de 10% pour que la ligne ne touche pas les bords
     const pad = (maxVal - minVal) * 0.1;
-
+    const finalMin = minVal - pad;
+    const finalMax = maxVal + pad;
+    
+    // Assure que min ne dépasse pas 0 si toutes les valeurs sont positives et le padding trop grand
+    // NOTE: C'est un choix de design, on le laisse tel quel pour l'instant.
+    
     return {
-      min: minVal - pad,
-      max: maxVal + pad,
+      min: finalMin,
+      max: finalMax,
     };
-  }
+  }, []);
 
-  const { min: yMinT, max: yMaxT } = computeYBounds(visibleTemp);
-  const { min: yMinP, max: yMaxP } = computeYBounds(visiblePress);
+  // Fonction unifiée pour obtenir la configuration du graphique
+  const getGraphConfig = React.useCallback(
+    (type) => {
+      // 1. Récupérer les méta-données du type de graphique
+      const graphInfo = GRAPH_TYPES.find((t) => t.key === type);
+      if (!graphInfo) {
+        return { data: { datasets: [] }, options: {} };
+      }
+      
+      const { label, unit: yUnit, color } = graphInfo;
 
-  /* ---------------------------------------------------
-        DONNÉES POUR CHARTJS
-  ---------------------------------------------------- */
-  const dataT = {
-    datasets: [
-      {
-        label: "Température",
-        data: tempData,
-        borderColor: "#3b82f6",
-        fill: false,
-        tension: 0.0,
-        pointRadius: 5,
-      },
-    ],
-  };
+      // 2. Récupérer les données de l'état (nécessite l'accès au scope de la fonction)
+      const dataStateKey = DATA_STATE_KEYS[type];
+      // On utilise un object pour mapper les noms des states
+      const allData = { 
+        tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, lightData, co2Data
+      };
+      const currentData = allData[dataStateKey] || [];
 
-  const optionsT = {
-    responsive: false,
-    plugins: {
-      legend: { display: false },
-      title: {
-        display: true,
-        text: `Courbe des mesures de température (${currentRangeLabel})`,
-      },
-    },
-    scales: {
-      y: {
-        min: yMinT,
-        max: yMaxT,
-        title: { display: true, text: "Température (°C)" },
-      },
-      x: {
-        type: "time",
-        time: {
-          unit: unit,
-          tooltipFormat: "dd/MM/yyyy HH:mm",
-          displayFormats: {
-            hour: "dd/MM HH:mm",
-            day: "dd/MM",
-            month: "MMM yyyy",
+      // 3. Filtrer les données pour la période visible pour un calcul Y précis
+      const visibleData = currentData.filter(
+          (p) => (!minDate || p.x >= minDate) && (!maxDate || p.x <= maxDate)
+      );
+
+      // 4. Calculer les bornes Y basées uniquement sur les données visibles
+      const { min: yMin, max: yMax } = computeYBounds(visibleData);
+
+      const data = {
+        datasets: [{
+          label: label,
+          // Nous passons toutes les données, Chart.js filtre l'axe X lui-même
+          data: currentData, 
+          borderColor: color,
+          fill: false,
+          tension: 0.0,
+          pointRadius: 5,
+        }],
+      };
+
+      const options = {
+        responsive: false,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: `Courbe des mesures de ${label} (${currentRangeLabel})` },
+        },
+        scales: {
+          y: {
+            min: yMin, 
+            max: yMax, 
+            title: { display: true, text: `${label} (${yUnit})` },
+          },
+          x: {
+            type: "time",
+            time: {
+              unit: unit,
+              tooltipFormat: "dd/MM/yyyy HH:mm",
+              displayFormats: { hour: "dd/MM HH:mm", day: "dd/MM", month: "MMM yyyy" },
+            },
+            min: minDate,
+            max: maxDate,
           },
         },
-        min: minDate,
-        max: maxDate,
-      },
-    },
-  };
+      };
 
-  const dataP = {
-    datasets: [
-      {
-        label: "Pression",
-        data: pressData,
-        borderColor: "#f63b3bff",
-        fill: false,
-        tension: 0.0,
-        pointRadius: 5,
-      },
-    ],
-  };
-
-  const optionsP = {
-    responsive: false,
-    plugins: {
-      legend: { display: false },
-      title: {
-        display: true,
-        text: `Courbe des mesures de pression (${currentRangeLabel})`,
-      },
+      return { data, options };
     },
-    scales: {
-      y: {
-        min: yMinP,
-        max: yMaxP,
-        title: { display: true, text: "Pression (hPa)" },
-      },
-      x: {
-        type: "time",
-        time: {
-          unit: unit,
-          tooltipFormat: "dd/MM/yyyy HH:mm",
-          displayFormats: {
-            hour: "dd/MM HH:mm",
-            day: "dd/MM",
-            month: "MMM yyyy",
-          },
-        },
-        min: minDate,
-        max: maxDate,
-      },
-    },
-  };
+    // Dépendances : Toutes les données, les fonctions/variables de temps et l'utilitaire Y
+    [
+        tempData, pressData, humidityData, pm1Data, pm25Data, pm10Data, lightData, co2Data, 
+        currentRangeLabel, unit, minDate, maxDate, computeYBounds
+    ]
+  );
+  
+  // Appel de la configuration dynamique pour le graphique sélectionné
+  const { data: currentData, options: currentOptions } = getGraphConfig(graphType);
 
   const derivedOffset = computeOffsetFromRef(timeRange, referenceDate);
 
@@ -498,12 +495,11 @@ export default function DetailsPage() {
 
           {/* GRAPHIQUE */}
           <center>
-            {graphType === "temp" && (
-              <Line data={dataT} options={optionsT} width={800} height={400} />
-            )}
-
-            {graphType === "press" && (
-              <Line data={dataP} options={optionsP} width={800} height={400} />
+            {/* Utilisation du graphique unique avec la configuration dynamique */}
+            {currentData && currentData.datasets.length > 0 ? (
+              <Line data={currentData} options={currentOptions} width={800} height={400} />
+            ) : (
+              <p>Chargement des données ou aucune donnée disponible pour cette période/type.</p>
             )}
           </center>
         </div>
