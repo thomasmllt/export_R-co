@@ -151,6 +151,7 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
   // Calcul des moyennes et date
   const avgTemp = (feature.mesureT.reduce((sum, n) => sum + n, 0) / feature.mesureT.length).toFixed(2);
   const avgPressure = (feature.mesureP.reduce((sum, n) => sum + n, 0) / feature.mesureP.length).toFixed(2);
+  const avgHumidity = (feature.mesureH.reduce((sum, n) => sum + n, 0) / feature.mesureH.length).toFixed(2);
   const lastMod = new Date(feature.times[feature.times.length - 1]);
 
   return (
@@ -185,6 +186,7 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
         <div style={{ marginTop: "10px", color: "#333" }}>
           <p><strong>Température moyenne:</strong> {avgTemp} °C</p>
           <p><strong>Pression moyenne:</strong> {avgPressure} hPa</p>
+          <p><strong>Humidité moyenne:</strong> {isNaN(avgHumidity) ? "N/A" : `${avgHumidity} %`}</p>
           <p><strong>Dernière modification:</strong> {lastMod.toLocaleDateString("fr-FR")}</p>
         </div>
       )}
