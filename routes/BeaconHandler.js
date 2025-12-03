@@ -13,6 +13,22 @@ router.get("/", async (req, res) => {
   }
 });
 
+//GET beacon data ({id,serial, name, position, description, last_update})
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const infoResult = await pool.query("SELECT * FROM Beacons WHERE id=$1", [id]);
+    if (infoResult.rows.length == 0) return res.status(404).json({ error: "Beacon not found" });
+    // res.json(result.rows[0])
+    const lastUpdate = await pool.query("SELECT MAX(timestamp) as last_update FROM measurements WHERE id_beacon=$1", [id]);
+     if (lastUpdate.rows.length == 0) return res.status(404).json({ error: "Not found" });
+    const result = {...infoResult.rows[0], last_update: lastUpdate.rows[0].last_update || null}; //Merge payload
+    res.json(result)
+  } catch (err){
+    res.status(500).json({ error: err.message });
+  }
+  })
+
 //GET serial of a beacon through its id
 router.get("/:id/serial", async (req, res) => {
   const { id } = req.params;
@@ -65,7 +81,7 @@ router.get("/:id/description", async (req, res) => {
  router.get("/:id/last_update", async (req, res) => {
    const { id } = req.params;
    try {
-     const result = await pool.query("SELECT MAX(timestamp) FROM measurements WHERE id_beacon=$1", [id]);
+     const result = await pool.query("SELECT MAX(timestamp) as last_update FROM measurements WHERE id_beacon=$1", [id]);
      if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
      res.json(result.rows[0]);
    } catch (err) {
