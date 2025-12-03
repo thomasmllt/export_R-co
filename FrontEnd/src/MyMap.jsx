@@ -6,6 +6,9 @@ import * as EL from 'esri-leaflet';
 import L from "leaflet";
 import supercluster from "supercluster";
 import { markers, puntos } from "./markers";
+import logo from "./assets/logo_def-07.png";
+
+
 const bounds = L.latLngBounds(
   [-85, -180], // Sud-Ouest
   [85, 180]    // Nord-Est
@@ -50,7 +53,7 @@ const createClusterIcon = (count) =>
 
 
 
-function ClusterLayer({ points, setHoveredInfo }) {
+function ClusterLayer({points, setSelectedId}) {
   const navigate = useNavigate();
   const map = useMap();
   const [bounds, setBounds] = useState(map.getBounds());
@@ -91,99 +94,199 @@ function ClusterLayer({ points, setHoveredInfo }) {
   // Récupère les clusters visibles
   const clusters = cluster.getClusters(bbox, Math.round(zoom));
   return (
-    <>
-      {clusters.map((feature) => {
-        const [longitude, latitude] = feature.geometry.coordinates;
-        const { cluster: isCluster, point_count: pointCount } = feature.properties;
+  <>
+    {clusters.map((feature) => {
+      const [longitude, latitude] = feature.geometry.coordinates;
+      const { cluster: isCluster, point_count: pointCount } = feature.properties;
 
-        if (isCluster) {
-          return (
-            <Marker
-              key={`cluster-${feature.id}`}
-              position={[latitude, longitude]}
-              icon={createClusterIcon(pointCount)}
-              eventHandlers={{
-                click: () => {
-                  const expansionZoom = Math.min(
-                    cluster.getClusterExpansionZoom(feature.id),
-                    18
-                  );
-                  map.setView([latitude, longitude], expansionZoom, { animate: true });
-                },
-              }}
-            />
-          );
-        }
-        const lastmod = new Date(feature.times[feature.times.length-1]);
+      if (isCluster) {
         return (
           <Marker
-            key={`point-${feature.properties.id}`}
+            key={`cluster-${feature.id}`}
             position={[latitude, longitude]}
-            icon={customIcon}  
+            icon={createClusterIcon(pointCount)}
             eventHandlers={{
-            click: () => handleMarkerClick(feature.properties.id),
-            mouseover: () => setHoveredInfo(
-              <div class="container">
-                <center>
-                <p style={{ fontSize: "25px" }}>{feature.name}</p>
-                <p>Position GPS : {feature.geometry.coordinates.join(', ')}</p>
-                <p>{feature.description}</p>
-                </center>
-                <p>_____________________________________________</p>
-                <p>Température moyenne : {(feature.mesureT.reduce((sum, num) => sum + num, 0)*100 / feature.mesureT.length).toFixed(0)/100}</p>
-                <p>Humidité moyenne : {(feature.mesureH.reduce((sum, num) => sum + num, 0)*100 / feature.mesureH.length).toFixed(0)/100}</p>
-                <p>Pression moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
-                <p>Concentration de poussière PM1 moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
-                <p>Concentration de poussière PM2.5 moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
-                <p>Concentration de poussière PM10 moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
-                <p>Concentration de CO2 moyenne : {(feature.mesureP.reduce((sum, num) => sum + num, 0)*100 / feature.mesureP.length).toFixed(0)/100}</p>
-                
-                <span class="footer-info">Dernière modification : {lastmod.toLocaleDateString("fr-FR")}</span>
-              </div>
-            ),
-            mouseout: () => setHoveredInfo(null),
-          }}
-          >
-          </Marker>
+              click: () => {
+                const expansionZoom = Math.min(
+                  cluster.getClusterExpansionZoom(feature.id),
+                  18
+                );
+                map.setView([latitude, longitude], expansionZoom, { animate: true });
+              }
+            }}
+          />
         );
-      })}
-    </>
-  );
+      }
+
+      return (
+        <Marker
+  key={`point-${feature.properties.id}`}
+  position={[latitude, longitude]}
+  icon={customIcon}
+  eventHandlers={{
+    click: () => {
+      // Surbrillance du widget ET ouvre les détails
+      setSelectedId(feature.properties.id);
+    },
+  }}
+/>
+
+      );
+    })}
+  </>
+);
 }
 
 
+function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
+  const navigate = useNavigate();
+  const [showDetails, setShowDetails] = useState(false);
+
+  // Synchronise l'affichage des détails avec la sélection
+  useEffect(() => {
+    setShowDetails(isSelected);
+  }, [isSelected]);
 
 
+  // Calcul des moyennes et date
+  const avgTemp = (feature.mesureT.reduce((sum, n) => sum + n, 0) / feature.mesureT.length).toFixed(2);
+  const avgPressure = (feature.mesureP.reduce((sum, n) => sum + n, 0) / feature.mesureP.length).toFixed(2);
+  const lastMod = new Date(feature.times[feature.times.length - 1]);
 
-
-
-export default function MyMap_test() {
-  const [hoveredInfo, setHoveredInfo] = useState(null);
   return (
-    <div style={{display: "flex",justifyContent: "flex-end", alignItems: "flex-start", height: "100%",width: "100%",margin: 0, padding: 0,background: "#eee"}}>
-      <title>Carte</title>
-      <div style={{ height : "100%",width: '25%', padding: '0px'}}>
-        {hoveredInfo ? hoveredInfo : <center><p>Survolez un marker</p></center>}
-      </div>
-      <MapContainer
-        center={[47, 2.3522]}
-        zoom={6}
-        scrollWheelZoom={true}
-        maxBounds={bounds}  
-        maxBoundsViscosity={1}
-        style={{ height: "100vh", width: "75vw"}}
+    <div
+      onClick={() => navigate(`/details/${feature.properties.id}`)} // redirige vers la page détaillée
+      style={{
+        position: "relative",
+        border: isSelected ? "2px solid orange" : "1px solid #ddd",
+        background: isSelected ? "#fff3e0" : "white",
+        padding: "10px",
+        borderRadius: "8px",
+        marginBottom: "10px",
+        cursor: "pointer"
+      }}
+    >
+      <h3
+        style={{
+          margin: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
       >
-        {/*<TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{x}/{y}.png"
-          attribution="Tiles © Esri — Source: Esri, USGS, NOAA"
-          maxNativeZoom={19}
-          detectRetina={false}
-        />*/}
-        <EsriImageryLayer />
-        <ClusterLayer points={markers} setHoveredInfo={setHoveredInfo} />
-      </MapContainer>
+        {feature.name}
+      </h3>
+      <p style={{ margin: "5px 0", color: "#666" }}>
+        {feature.description}
+      </p>
+
+
+      {showDetails && (
+        <div style={{ marginTop: "10px", color: "#333" }}>
+          <p><strong>Température moyenne:</strong> {avgTemp} °C</p>
+          <p><strong>Pression moyenne:</strong> {avgPressure} hPa</p>
+          <p><strong>Dernière modification:</strong> {lastMod.toLocaleDateString("fr-FR")}</p>
+        </div>
+      )}
+
+      {/* Flèche en bas à droite */}
+      <span
+        onClick={(e) => {
+          e.stopPropagation(); // empêche le clic parent de naviguer
+          const newState = !showDetails;
+          setShowDetails(newState);
+          // Si on ouvre les détails, on surligne aussi
+          if (newState) {
+            setSelectedId(feature.properties.id);
+          } else {
+            setSelectedId(null);
+          }
+        }}
+        style={{
+          position: "absolute",
+          bottom: "10px",
+          right: "10px",
+          cursor: "pointer",
+          fontSize: "1.2rem"
+        }}
+      >
+        {showDetails ? "▲" : "▼"}
+      </span>
     </div>
   );
 }
 
 
+export default function MyMap_test() {
+  const [selectedId, setSelectedId] = useState(null);
+
+  return (
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      height: "100vh",
+      width: "100%",
+      margin: 0,
+      padding: 0,
+      background: "#eee"
+    }}>
+
+      {/* ========== BANDEAU EN HAUT ========== */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        backgroundColor: "white",
+        padding: "20px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        zIndex: 1000
+      }}>
+        {/* Logo + Nom */}
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <img src={logo} alt="Renardo" style={{ height: "40px", marginRight: "10px" }} />
+        </div>
+
+        {/* Lien externe */}
+        <a href="https://www.renardo-tech.fr/" target="_blank" rel="noopener noreferrer"
+          style={{ textDecoration: "none", color: "#007BFF", fontWeight: "bold", fontSize: "1rem" }}>
+          Notre site web
+        </a>
+      </div>
+
+{/* ========== CONTENU PRINCIPAL : BANDEAU + CARTE ========== */}
+<div style={{ flex: 1, display: "flex" }}>
+  
+  {/* Bandeau widgets à gauche */}
+  <div style={{ width: "300px", overflowY: "auto", background: "#fff", padding: "10px", borderRight: "1px solid #ddd" }}>
+    {markers.map((feature) => (
+      <WidgetItem
+        key={feature.properties.id}
+        feature={feature}
+        isSelected={selectedId === feature.properties.id}
+        setSelectedId={setSelectedId}
+      />
+    ))}
+  </div>
+
+  {/* Carte à droite */}
+  <div style={{ flex: 1 }}>
+    <MapContainer
+      center={[47, 2.3522]}
+      zoom={6}
+      scrollWheelZoom={true}
+      maxBounds={bounds}
+      maxBoundsViscosity={1}
+      style={{ height: "100%", width: "100%" }}
+    >
+      <EsriImageryLayer />
+      <ClusterLayer
+        points={markers}
+        setSelectedId={setSelectedId}
+      />
+    </MapContainer>
+  </div>
+
+</div>
+    </div>
+  );
+}
