@@ -22,7 +22,6 @@ import {
   endOfDay,
 } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
-import { markers } from "../src/markers";
 
 ChartJS.register(
   LineElement,
@@ -156,11 +155,11 @@ export default function DetailsPage() {
         { id: 1, setter: setTempData, error: "Erreur temp" },
         { id: 2, setter: setHumidityData, error: "Erreur humidité" },
         { id: 3, setter: setPressData, error: "Erreur pression" },
-        { id: 4, setter: setPM1Data, error: "Erreur PM 1.0" },
-        { id: 5, setter: setPM25Data, error: "Erreur PM 2.5" },
-        { id: 6, setter: setPM10Data, error: "Erreur PM 10" },
-        { id: 8, setter: setCO2Data, error: "Erreur CO2" },
-        { id: 9, setter: setGPSData, error: "Erreur GPS" }, // Non utilisé pour Line Chart
+        { id: 5, setter: setPM1Data, error: "Erreur PM 1.0" },
+        { id: 6, setter: setPM25Data, error: "Erreur PM 2.5" },
+        { id: 7, setter: setPM10Data, error: "Erreur PM 10" },
+        { id: 9, setter: setCO2Data, error: "Erreur CO2" },
+        { id: 10, setter: setGPSData, error: "Erreur GPS" }, // Non utilisé pour Line Chart
     ];
 
     async function fetchAllMeasurements() {
@@ -291,7 +290,8 @@ export default function DetailsPage() {
       };
 
       const options = {
-        responsive: false,
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
           title: { display: true, text: `Courbe des mesures de ${label} (${currentRangeLabel})` },
@@ -299,13 +299,14 @@ export default function DetailsPage() {
         scales: {
           y: {
             title: { display: true, text: `${label} (${yUnit})` },
-            grace: "10%",        // ← ajoute 10% en haut et en bas
+            grace: "10%",
             ticks: { padding: 6 }
           },
           x: {
             type: "time",
             time: {
-              unit: unit,
+              unit: timeRange === "1D" ? "hour" : "day",
+              stepSize: 1,
               tooltipFormat: "dd/MM/yyyy HH:mm",
               displayFormats: { hour: "dd/MM HH:mm", day: "dd/MM", month: "MMM yyyy" },
             },
@@ -314,6 +315,7 @@ export default function DetailsPage() {
           },
         },
       };
+      
 
       return { data, options };
     },
