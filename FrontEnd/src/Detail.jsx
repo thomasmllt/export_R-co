@@ -49,7 +49,6 @@ const GRAPH_TYPES = [
   { label: "PM 1.0", key: "pm1", measurementId: 4, unit: "µg/m³", color: "#f59e0b" },
   { label: "PM 2.5", key: "pm25", measurementId: 5, unit: "µg/m³", color: "#f97316" },
   { label: "PM 10", key: "pm10", measurementId: 6, unit: "µg/m³", color: "#d97706" },
-  { label: "Luminosité", key: "light", measurementId: 7, unit: "lux", color: "#a855f7" },
   { label: "CO2", key: "co2", measurementId: 8, unit: "ppm", color: "#ef4444" },
   // NOTE: GPS (measurementId: 9) est un cas spécial (lat/lng) et n'est pas pris en charge par Line chart
 ];
@@ -62,7 +61,6 @@ const DATA_STATE_KEYS = {
     "pm1": "pm1Data",
     "pm25": "pm25Data",
     "pm10": "pm10Data",
-    "light": "lightData",
     "co2": "co2Data",
 };
 
@@ -84,7 +82,6 @@ export default function DetailsPage() {
   const [pm1Data, setPM1Data] = React.useState([]);
   const [pm25Data, setPM25Data] = React.useState([]);
   const [pm10Data, setPM10Data] = React.useState([]);
-  const [lightData, setLightData] = React.useState([]);
   const [co2Data, setCO2Data] = React.useState([]);
   const [gpsData, setGPSData] = React.useState([]); // Non utilisé pour Line chart, mais gardé
 
@@ -162,7 +159,6 @@ export default function DetailsPage() {
         { id: 4, setter: setPM1Data, error: "Erreur PM 1.0" },
         { id: 5, setter: setPM25Data, error: "Erreur PM 2.5" },
         { id: 6, setter: setPM10Data, error: "Erreur PM 10" },
-        { id: 7, setter: setLightData, error: "Erreur luminosité" },
         { id: 8, setter: setCO2Data, error: "Erreur CO2" },
         { id: 9, setter: setGPSData, error: "Erreur GPS" }, // Non utilisé pour Line Chart
     ];
@@ -272,7 +268,7 @@ export default function DetailsPage() {
       const dataStateKey = DATA_STATE_KEYS[type];
       // On utilise un object pour mapper les noms des states
       const allData = { 
-        tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, lightData, co2Data
+        tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, co2Data
       };
       const currentData = allData[dataStateKey] || [];
 
@@ -323,7 +319,7 @@ export default function DetailsPage() {
     },
     // Dépendances : Toutes les données, les fonctions/variables de temps et l'utilitaire Y
     [
-        tempData, pressData, humidityData, pm1Data, pm25Data, pm10Data, lightData, co2Data, 
+        tempData, pressData, humidityData, pm1Data, pm25Data, pm10Data, co2Data, 
         currentRangeLabel, unit, minDate, maxDate
     ]
   );
