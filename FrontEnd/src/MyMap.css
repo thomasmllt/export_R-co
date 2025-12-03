@@ -1,4 +1,9 @@
 @import "leaflet/dist/leaflet.css";
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600;700&display=swap');
+
+* {
+  font-family: 'Raleway', sans-serif;
+}
 
 html, body, #root {
   max-width: 100%;

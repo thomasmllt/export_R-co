@@ -66,7 +66,7 @@ router.post("/", async (req, res) => {
       try {
         // Utiliser id effectif si précédemment mappé
         const effectiveBeaconId = beaconIdMap.get(beacon_id) || beacon_id;
-        const beaconCheck = await client.query("SELECT 1 FROM Beacons WHERE id=$1", [effectiveBeaconId]);
+        const beaconCheck = await client.query("SELECT 1 FROM beacons WHERE id=$1", [effectiveBeaconId]);
         if (beaconCheck.rowCount === 0) {
           // Chercher GPS le plus pertinent pour cette balise (priorité sensorType GPS_S)
           let lat = null, lon = null;
@@ -81,11 +81,12 @@ router.post("/", async (req, res) => {
           try {
             const serial = `AUTO_${beacon_id}`;
             const name = `Auto ${beacon_id}`;
+            const position = `${lat},${lon}`;
             // Ne pas forcer l'id si la colonne est identity; récupérer celui généré
             const ins = await client.query(
-              `INSERT INTO Beacons (serial, position, name, description)
-               VALUES ($1, POINT($2,$3), $4, $5) RETURNING id`,
-              [serial, lat, lon, name, null]
+              `INSERT INTO beacons (serial, position, name, description)
+               VALUES ($1, $2, $3, $4) RETURNING id`,
+              [serial, position, name, null]
             );
             const newId = ins.rows[0].id;
             beaconIdMap.set(beacon_id, newId);
@@ -105,7 +106,8 @@ router.post("/", async (req, res) => {
       const effectiveBeaconId = beaconIdMap.get(beacon_id) || beacon_id;
       if (sensorType === 'GPS_S' && gps && gps.lat != null && gps.lon != null) {
         try {
-          await client.query("UPDATE Beacons SET position = POINT($1,$2) WHERE id=$3", [gps.lat, gps.lon, effectiveBeaconId]);
+          const position = `${gps.lat},${gps.lon}`;
+          await client.query("UPDATE beacons SET position = $1 WHERE id=$2", [position, effectiveBeaconId]);
           gpsUpdates++;
         } catch (e) {
           errors.push({ sensorType, beacon_id, error: "Échec mise à jour GPS: " + e.message });
@@ -119,7 +121,7 @@ router.post("/", async (req, res) => {
           if (typeCache.has(sensorType)) {
             idType = typeCache.get(sensorType);
           } else {
-            const r = await client.query("SELECT id_type FROM Type_measurement WHERE name=$1 LIMIT 1", [sensorType]);
+            const r = await client.query("SELECT id_type FROM type_measurement WHERE name=$1 LIMIT 1", [sensorType]);
             if (r.rowCount === 0) {
               // Construction dynamique de l'INSERT selon colonnes dispo
               const cols = ['name'];
@@ -128,7 +130,7 @@ router.post("/", async (req, res) => {
               let paramIndex = 2;
               if (hasTypeUnit) { cols.push('unit'); placeholders.push(`$${paramIndex++}`); vals.push(null); }
               if (hasTypeDescription) { cols.push('description'); placeholders.push(`$${paramIndex++}`); vals.push(null); }
-              const insertSql = `INSERT INTO Type_measurement (${cols.join(',')}) VALUES (${placeholders.join(',')}) RETURNING id_type`;
+              const insertSql = `INSERT INTO type_measurement (${cols.join(',')}) VALUES (${placeholders.join(',')}) RETURNING id_type`;
               const crt = await client.query(insertSql, vals);
               idType = crt.rows[0].id_type; typesCreated++;
             } else {
