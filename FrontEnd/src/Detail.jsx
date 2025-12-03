@@ -70,8 +70,6 @@ const DATA_STATE_KEYS = {
 export default function DetailsPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const marker = markers.find((m) => m.properties.id == id);
-  const name = marker ? marker.name : "Unknown";
 
   const [timeRange, setTimeRange] = React.useState("ALL");
   const [graphType, setGraphType] = React.useState("temp");
@@ -259,28 +257,6 @@ export default function DetailsPage() {
         FONCTIONS UTILITAIRES DE GRAPHIQUE
   ---------------------------------------------------- */
 
-  // Fonction pour calculer les bornes Y, déplacée ici pour être utilisée comme dépendance
-  const computeYBounds = React.useCallback((data) => {
-    if (!data || data.length === 0) return { min: 0, max: 1 };
-
-    const values = data.map((p) => p.y);
-    const minVal = Math.min(...values);
-    const maxVal = Math.max(...values);
-
-    // Ajouter un padding de 10% pour que la ligne ne touche pas les bords
-    const pad = (maxVal - minVal) * 0.1;
-    const finalMin = minVal - pad;
-    const finalMax = maxVal + pad;
-    
-    // Assure que min ne dépasse pas 0 si toutes les valeurs sont positives et le padding trop grand
-    // NOTE: C'est un choix de design, on le laisse tel quel pour l'instant.
-    
-    return {
-      min: finalMin,
-      max: finalMax,
-    };
-  }, []);
-
   // Fonction unifiée pour obtenir la configuration du graphique
   const getGraphConfig = React.useCallback(
     (type) => {
@@ -305,8 +281,6 @@ export default function DetailsPage() {
           (p) => (!minDate || p.x >= minDate) && (!maxDate || p.x <= maxDate)
       );
 
-      // 4. Calculer les bornes Y basées uniquement sur les données visibles
-      const { min: yMin, max: yMax } = computeYBounds(visibleData);
 
       const data = {
         datasets: [{
@@ -328,9 +302,9 @@ export default function DetailsPage() {
         },
         scales: {
           y: {
-            min: yMin, 
-            max: yMax, 
             title: { display: true, text: `${label} (${yUnit})` },
+            grace: "10%",        // ← ajoute 10% en haut et en bas
+            ticks: { padding: 6 }
           },
           x: {
             type: "time",
@@ -350,7 +324,7 @@ export default function DetailsPage() {
     // Dépendances : Toutes les données, les fonctions/variables de temps et l'utilitaire Y
     [
         tempData, pressData, humidityData, pm1Data, pm25Data, pm10Data, lightData, co2Data, 
-        currentRangeLabel, unit, minDate, maxDate, computeYBounds
+        currentRangeLabel, unit, minDate, maxDate
     ]
   );
   
@@ -364,7 +338,7 @@ export default function DetailsPage() {
   ---------------------------------------------------- */
   return (
     <div>
-      <title>{`Données balise ${name}`}</title>
+      <title>{`Données balise ${beaconName}`}</title>
       <div style={{ display: "flex", justifyContent: "flex-start" }}>
         <div style={{ width: "5%", padding: "20px" }}>
           <button
@@ -379,7 +353,7 @@ export default function DetailsPage() {
 
         <div style={{ width: "50%" }}>
           <center>
-            <h1>Données de la balise {name}</h1>
+            <h1>Données de la balise {beaconName}</h1>
             <h2>Données de test : {beaconName} </h2>
           </center>
 
