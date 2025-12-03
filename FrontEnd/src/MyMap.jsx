@@ -221,6 +221,8 @@ export default function MyMap_test() {
   const [selectedId, setSelectedId] = useState(null);
 
   return (
+    <div>
+    <title>{"Carte"}</title>
     <div style={{
       display: "flex",
       flexDirection: "column",
@@ -230,7 +232,6 @@ export default function MyMap_test() {
       padding: 0,
       background: "#eee"
     }}>
-
       {/* ========== BANDEAU EN HAUT ========== */}
       <div style={{
         display: "flex",
@@ -288,5 +289,6 @@ export default function MyMap_test() {
 
 </div>
     </div>
+  </div>
   );
 }
