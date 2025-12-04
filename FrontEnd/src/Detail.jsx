@@ -459,7 +459,7 @@ export default function DetailsPage() {
           </div>
 
           {/* CONTRÔLE TEMPS */}
-          <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
+          <div style={{ marginBottom: "20px", display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ position: "relative", display: "inline-block" }}>
               <button
                 onClick={() => setOpen(!open)}
@@ -503,22 +503,42 @@ export default function DetailsPage() {
             </div>
 
             {timeRange !== "ALL" && (
-              <div style={{ display: "flex", gap: "5px" }}>
-                <button
-                  onClick={() => handleTimeShift(-1)}
-                  className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold"
-                >
-                  &lt; Précédent
-                </button>
+              <>
+                <div style={{ display: "flex", gap: "5px" }}>
+                  <button
+                    onClick={() => handleTimeShift(-1)}
+                    className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold"
+                  >
+                    &lt; Précédent
+                  </button>
 
-                <button
-                  onClick={() => handleTimeShift(1)}
-                  className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold"
-                  disabled={derivedOffset === 0}
-                >
-                  Suivant &gt;
-                </button>
-              </div>
+                  <button
+                    onClick={() => handleTimeShift(1)}
+                    className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold"
+                    disabled={derivedOffset === 0}
+                  >
+                    Suivant &gt;
+                  </button>
+                </div>
+
+                {/* CALENDRIER POUR SÉLECTIONNER LA DATE */}
+                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  <label htmlFor="datePicker" style={{ fontSize: "14px", fontWeight: "500" }}>
+                    📅
+                  </label>
+                  <input
+                    id="datePicker"
+                    type="date"
+                    value={referenceDate.toISOString().split('T')[0]}
+                    onChange={(e) => {
+                      const selectedDate = new Date(e.target.value + 'T00:00:00');
+                      setReferenceDate(selectedDate);
+                    }}
+                    className="py-1 px-2 rounded-lg border border-gray-300 text-sm"
+                    style={{ cursor: "pointer" }}
+                  />
+                </div>
+              </>
             )}
           </div>
 
