@@ -138,7 +138,7 @@ export default function DetailsPage() {
     async function fetchBeaconName() {
       // ... (inchangé)
       try {
-        const response = await fetch(`http://localhost:3000/beacon/${id}/name`);
+        const response = await fetch(`https://r-co-api.onrender.com/beacon/${id}/name`);
         const data = await response.json();
         setBeaconName(data.name);
       } catch (error) {
@@ -166,7 +166,7 @@ export default function DetailsPage() {
         // Exécution des requêtes en parallèle (ou séquentiellement si le backend est sensible)
         const fetchPromises = MEASUREMENT_MAPPINGS.map(async ({ id: measurementId, setter, error }) => {
             try {
-                const response = await fetch(`http://localhost:3000/measurement/${id}/${measurementId}`);
+                const response = await fetch(`https://r-co-api.onrender.com/measurement/${id}/${measurementId}`);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 
