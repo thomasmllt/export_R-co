@@ -6,6 +6,7 @@ import * as EL from 'esri-leaflet';
 import L from "leaflet";
 import supercluster from "supercluster";
 import logo from "./assets/logo_def-07.png";
+import locIcon from "./assets/loc.png";
 
 async function loadBeacons() {
   try {
@@ -67,7 +68,7 @@ function EsriImageryLayer() {
 }
 
 const customIcon = new L.Icon({
-  iconUrl: "../src/assets/loc.png", // chemin vers ton icône
+  iconUrl: locIcon, // chemin vers ton icône
   iconSize: [42, 42], // taille de l'icône
   iconAnchor: [16, 32], // point de l'icône qui correspond à la position du marker
   popupAnchor: [0, -32], // position du popup par rapport à l'icône
@@ -191,11 +192,18 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
 
 
   // Calcul des moyennes et date
+<<<<<<< HEAD
   const avgTemp = feature.avgTemp;
   const avgPressure = feature.avgPressure;
   const avgHumidity = feature.avgHumidity;
   //const lastUpdate = feature.last_update;
   //console.log("last update = ", lastUpdate);
+=======
+  const avgTemp = (feature.mesureT.reduce((sum, n) => sum + n, 0) / feature.mesureT.length).toFixed(2);
+  const avgPressure = (feature.mesureP.reduce((sum, n) => sum + n, 0) / feature.mesureP.length).toFixed(2);
+  const avgHumidity = (feature.mesureH.reduce((sum, n) => sum + n, 0) / feature.mesureH.length).toFixed(2);
+  const lastMod = new Date(feature.times[feature.times.length - 1]);
+>>>>>>> 86eb6539f7eb7bb35b4a12634d06540d8aa774c7
 
   return (
     <div
@@ -229,8 +237,13 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
         <div style={{ marginTop: "10px", color: "#333" }}>
           <p><strong>Température moyenne:</strong> {avgTemp} °C</p>
           <p><strong>Pression moyenne:</strong> {avgPressure} hPa</p>
+<<<<<<< HEAD
           <p><strong>Humidité moyenne:</strong> {avgHumidity} %</p>
           {/*<p><strong>Dernière modification:</strong> {lastUpdate.toLocaleDateString("fr-FR")}</p>*/}
+=======
+          <p><strong>Humidité moyenne:</strong> {isNaN(avgHumidity) ? "N/A" : `${avgHumidity} %`}</p>
+          <p><strong>Dernière modification:</strong> {lastMod.toLocaleDateString("fr-FR")}</p>
+>>>>>>> 86eb6539f7eb7bb35b4a12634d06540d8aa774c7
         </div>
       )}
 
