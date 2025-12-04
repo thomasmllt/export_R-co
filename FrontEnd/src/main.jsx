@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import './index.css'
-import MyMap from './MyMap.jsx'
+import MyMapInit from './MyMap.jsx'
 import Detail from "./Detail.jsx";
 import Princ from "./Princ.jsx"
 
@@ -13,7 +13,7 @@ createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<Princ />} />
-      <Route path="/carte" element={<MyMap/>} />
+      <Route path="/carte" element={<MyMapInit/>} />
       <Route path="/details/:id" element={<Detail />} />
     </Routes>
   </BrowserRouter>

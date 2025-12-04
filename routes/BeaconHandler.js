@@ -18,11 +18,22 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const infoResult = await pool.query("SELECT * FROM Beacons WHERE id=$1", [id]);
-    if (infoResult.rows.length == 0) return res.status(404).json({ error: "Beacon not found" });
-    // res.json(result.rows[0])
+    if (infoResult.rows.length == 0) return res.status(404).json({ error: "Beacon not found" });   
+    const avgTemp = await pool.query("SELECT AVG(value) AS avgTemp FROM (SELECT value FROM measurements WHERE id_beacon = $1 AND id_type = 1 ORDER BY timestamp DESC LIMIT 10);", [id]);
+    if (avgTemp.rows.length == 0) return res.status(404).json({ error: "avgTemp not found" });
+    const avgPressure = await pool.query("SELECT AVG(value) AS avgPressure FROM (SELECT value FROM measurements WHERE id_beacon = $1 AND id_type = 3 ORDER BY timestamp DESC LIMIT 10);", [id]);
+    if (avgPressure.rows.length == 0) return res.status(404).json({ error: "avgPressure not found" });
+    const avgHumidity = await pool.query("SELECT AVG(value) AS avgHumidity FROM (SELECT value FROM measurements WHERE id_beacon = $1 AND id_type = 2 ORDER BY timestamp DESC LIMIT 10);", [id]);
+    if (avgHumidity.rows.length == 0) return res.status(404).json({ error: "avgHumidity not found" });
     const lastUpdate = await pool.query("SELECT MAX(timestamp) as last_update FROM measurements WHERE id_beacon=$1", [id]);
-     if (lastUpdate.rows.length == 0) return res.status(404).json({ error: "Not found" });
-    const result = {...infoResult.rows[0], last_update: lastUpdate.rows[0].last_update || null}; //Merge payload
+    if (lastUpdate.rows.length == 0) return res.status(404).json({ error: "last update not found" });
+
+    const result = {...infoResult.rows[0], 
+      avgTemp: avgTemp.rows[0].avgtemp || null,
+      avgPressure: avgPressure.rows[0].avgpressure || null,
+      avgHumidity: avgHumidity.rows[0].avghumidity || null,
+      last_update: lastUpdate.rows[0].last_update || null}; //Merge payload
+    
     res.json(result)
   } catch (err){
     res.status(500).json({ error: err.message });

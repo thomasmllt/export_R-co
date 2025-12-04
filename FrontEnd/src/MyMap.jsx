@@ -5,8 +5,50 @@ import { useNavigate } from "react-router-dom";
 import * as EL from 'esri-leaflet';
 import L from "leaflet";
 import supercluster from "supercluster";
-import { markers, puntos } from "./markers";
 import logo from "./assets/logo_def-07.png";
+
+async function loadBeacons() {
+  try {
+    // Fetch list of beacon IDs
+    const res = await fetch("http://localhost:3000/beacon");
+    const idList = await res.json(); // -> [{id:1},{id:2}...]
+    // Fetch details for each beacon in parallel
+    const detailPromises = idList.map(async (b) => {
+      const r = await fetch(`http://localhost:3000/beacon/${b.id}`);
+      const rjson = await r.json();
+      if (rjson.position) {
+        rjson.position = rjson.position.split(',').map(Number);
+      }
+      return rjson; // -> {id, serial, name, position, description, last_update...}
+    });
+
+    return await Promise.all(detailPromises);
+
+  } catch (err) {
+    console.error("Error fetching beacons:", err);
+  }
+}
+
+
+export default function MyMapInit() {
+
+  const [loading, setLoading] = useState(true);
+  const [beacons, setBeacons] = useState([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      const data = await loadBeacons();
+      setBeacons(data);
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  if (loading) return <p>Loading...</p>;
+  if (beacons.length == 0) return <p>No beacon found.</p>;
+
+  return <MyMap beacons={beacons} />;
+}
 
 
 const bounds = L.latLngBounds(
@@ -59,7 +101,7 @@ function ClusterLayer({points, setSelectedId}) {
   const [bounds, setBounds] = useState(map.getBounds());
   const [zoom, setZoom] = useState(map.getZoom());
   const handleMarkerClick = (id) => {
-    // 🔹 Navigue vers la même page avec un paramètre
+    // Navigue vers la même page avec un paramètre
     navigate(`/details/${id}`);
   };
 
@@ -96,8 +138,8 @@ function ClusterLayer({points, setSelectedId}) {
   return (
   <>
     {clusters.map((feature) => {
-      const [longitude, latitude] = feature.geometry.coordinates;
-      const { cluster: isCluster, point_count: pointCount } = feature.properties;
+      const [longitude, latitude] = feature.position;
+      const { cluster: isCluster, point_count: pointCount } = { cluster: false, id: feature.id };
 
       if (isCluster) {
         return (
@@ -120,13 +162,13 @@ function ClusterLayer({points, setSelectedId}) {
 
       return (
         <Marker
-  key={`point-${feature.properties.id}`}
+  key={`point-${feature.id}`}
   position={[latitude, longitude]}
   icon={customIcon}
   eventHandlers={{
     click: () => {
       // Surbrillance du widget ET ouvre les détails
-      setSelectedId(feature.properties.id);
+      setSelectedId(feature.id);
     },
   }}
 />
@@ -149,13 +191,15 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
 
 
   // Calcul des moyennes et date
-  const avgTemp = (feature.mesureT.reduce((sum, n) => sum + n, 0) / feature.mesureT.length).toFixed(2);
-  const avgPressure = (feature.mesureP.reduce((sum, n) => sum + n, 0) / feature.mesureP.length).toFixed(2);
-  const lastMod = new Date(feature.times[feature.times.length - 1]);
+  const avgTemp = feature.avgTemp;
+  const avgPressure = feature.avgPressure;
+  const avgHumidity = feature.avgHumidity;
+  //const lastUpdate = feature.last_update;
+  //console.log("last update = ", lastUpdate);
 
   return (
     <div
-      onClick={() => navigate(`/details/${feature.properties.id}`)} // redirige vers la page détaillée
+      onClick={() => navigate(`/details/${feature.id}`)} // redirige vers la page détaillée
       style={{
         position: "relative",
         border: isSelected ? "2px solid orange" : "1px solid #ddd",
@@ -185,7 +229,8 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
         <div style={{ marginTop: "10px", color: "#333" }}>
           <p><strong>Température moyenne:</strong> {avgTemp} °C</p>
           <p><strong>Pression moyenne:</strong> {avgPressure} hPa</p>
-          <p><strong>Dernière modification:</strong> {lastMod.toLocaleDateString("fr-FR")}</p>
+          <p><strong>Humidité moyenne:</strong> {avgHumidity} %</p>
+          {/*<p><strong>Dernière modification:</strong> {lastUpdate.toLocaleDateString("fr-FR")}</p>*/}
         </div>
       )}
 
@@ -197,7 +242,7 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
           setShowDetails(newState);
           // Si on ouvre les détails, on surligne aussi
           if (newState) {
-            setSelectedId(feature.properties.id);
+            setSelectedId(feature.id);
           } else {
             setSelectedId(null);
           }
@@ -217,7 +262,7 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
 }
 
 
-export default function MyMap_test() {
+function MyMap( {beacons}) {
   const [selectedId, setSelectedId] = useState(null);
 
   return (
@@ -259,11 +304,11 @@ export default function MyMap_test() {
   
   {/* Bandeau widgets à gauche */}
   <div style={{ width: "300px", overflowY: "auto", background: "#fff", padding: "10px", borderRight: "1px solid #ddd" }}>
-    {markers.map((feature) => (
+    {beacons.map((feature) => (
       <WidgetItem
-        key={feature.properties.id}
+        key={feature.id}
         feature={feature}
-        isSelected={selectedId === feature.properties.id}
+        isSelected={selectedId === feature.id}
         setSelectedId={setSelectedId}
       />
     ))}
@@ -281,7 +326,7 @@ export default function MyMap_test() {
     >
       <EsriImageryLayer />
       <ClusterLayer
-        points={markers}
+        points={beacons}
         setSelectedId={setSelectedId}
       />
     </MapContainer>
