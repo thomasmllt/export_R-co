@@ -7,6 +7,7 @@ import L from "leaflet";
 import supercluster from "supercluster";
 import { markers, puntos } from "./markers";
 import logo from "./assets/logo_def-07.png";
+import locIcon from "./assets/loc.png";
 
 
 const bounds = L.latLngBounds(
@@ -25,7 +26,7 @@ function EsriImageryLayer() {
 }
 
 const customIcon = new L.Icon({
-  iconUrl: "../src/assets/loc.png", // chemin vers ton icône
+  iconUrl: locIcon, // chemin vers ton icône
   iconSize: [42, 42], // taille de l'icône
   iconAnchor: [16, 32], // point de l'icône qui correspond à la position du marker
   popupAnchor: [0, -32], // position du popup par rapport à l'icône
