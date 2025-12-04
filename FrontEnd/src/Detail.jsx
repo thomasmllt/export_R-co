@@ -174,7 +174,9 @@ export default function DetailsPage() {
                 const data = await response.json();
                 
                 // Formate les données pour TimeScale: {x: Date, y: value}
-                const formattedData = data.map((d) => ({ x: new Date(d.timestamp), y: d.value }));
+                const formattedData = data.map((d) => {const date = new Date(d.timestamp);
+                  date.setHours(date.getHours() - 1); // <-- décale d'une heure
+                  return { x: date, y: d.value };});
                 setter(formattedData);
             } catch (err) {
                 console.error(error + " :", err);
