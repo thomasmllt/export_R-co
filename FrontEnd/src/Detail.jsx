@@ -244,9 +244,9 @@ export default function DetailsPage() {
   /* ---------------------------------------------------
         CALCUL DES LIMITES X
   ---------------------------------------------------- */
-  const { min: minDate, max: maxDate, label: currentRangeLabel } =
+  /*const { min: minDate, max: maxDate, label: currentRangeLabel } =
     getTimeRangeLimits(timeRange, referenceDate);
-  const unit = timeRange === "1D" ? "hour" : "day";
+  const unit = timeRange === "1D" ? "hour" : "day";*/
 
   /* ---------------------------------------------------
         FONCTIONS UTILITAIRES DE GRAPHIQUE
@@ -254,80 +254,137 @@ export default function DetailsPage() {
 
   // Fonction unifiée pour obtenir la configuration du graphique
   const getGraphConfig = React.useCallback(
-    (type) => {
-      // 1. Récupérer les méta-données du type de graphique
-      const graphInfo = GRAPH_TYPES.find((t) => t.key === type);
-      if (!graphInfo) {
-        return { data: { datasets: [] }, options: {} };
-      }
-      
-      const { label, unit: yUnit, color } = graphInfo;
+  (type) => {
+    const graphInfo = GRAPH_TYPES.find((t) => t.key === type);
+    if (!graphInfo) return { data: { datasets: [] }, options: {} };
 
-      // 2. Récupérer les données de l'état (nécessite l'accès au scope de la fonction)
-      const dataStateKey = DATA_STATE_KEYS[type];
-      // On utilise un object pour mapper les noms des states
-      const allData = { 
-        tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, co2Data
+    const { label, unit: yUnit, color } = graphInfo;
+    const dataStateKey = DATA_STATE_KEYS[type];
+
+    const allData = { 
+      tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, co2Data 
+    };
+    const currentData = allData[dataStateKey] || [];
+
+    if (currentData.length === 0) {
+      return {
+        data: { datasets: [] },
+        options: {},
       };
-      const currentData = allData[dataStateKey] || [];
+    }
 
-      // 3. Filtrer les données pour la période visible pour un calcul Y précis
-      const visibleData = currentData.filter(
-          (p) => (!minDate || p.x >= minDate) && (!maxDate || p.x <= maxDate)
-      );
+    // --- TRI DES DONNÉES PAR DATE ---
+    const sortedData = [...currentData].sort((a, b) => a.x - b.x);
 
+    let dynamicAllUnit = "month";
 
-      const data = {
-        datasets: [{
-          label: label,
-          // Nous passons toutes les données, Chart.js filtre l'axe X lui-même
-          data: currentData, 
-          borderColor: color,
-          fill: false,
-          tension: 0.0,
-          pointRadius: 5,
-        }],
-      };
+    if (sortedData.length >= 2) {
+      const start = sortedData[0].x.getTime();
+      const end = sortedData[sortedData.length - 1].x.getTime();
+      const spanDays = (end - start) / (1000 * 60 * 60 * 24);
 
-      const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: `Courbe des mesures de ${label} (${currentRangeLabel})` },
+      if(24*spanDays <= 1) dynamicAllUnit = "minute"
+      else if (spanDays <= 1) dynamicAllUnit = "hour";
+      else if (spanDays <= 30) dynamicAllUnit = "day";
+      else if (spanDays <= 500) dynamicAllUnit = "month";
+      else dynamicAllUnit = "year";
+    }
+
+    // --- CALCUL DES MIN/MAX SELON timeRange ---
+    let minDate, maxDate;
+
+    if (timeRange === "1D") {
+      // On prend la référence pour 1 jour
+      const ref = startOfDay(referenceDate);
+      minDate = ref;
+      maxDate = endOfDay(ref);
+    } else if (timeRange === "7D") {
+      const day = referenceDate.getDay();
+      const diffToMonday = (day + 6) % 7; // lundi = 0
+      const monday = startOfDay(subDays(referenceDate, diffToMonday));
+      minDate = monday;
+      maxDate = endOfDay(addDays(monday, 6));
+    } else if (timeRange === "1M") {
+      const d = referenceDate;
+      minDate = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0);
+      maxDate = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+    } else if (timeRange === "ALL") {
+      // --- POUR ALL, ON PREND LES DATES DES DONNÉES ---
+      minDate = undefined/*sortedData[0].x*/;
+      maxDate = undefined /*sortedData[sortedData.length - 1].x*/;
+    }
+
+    // --- FILTRAGE DES DONNÉES VISIBLES ---
+    const visibleData = currentData.filter(
+      (p) => p.x >= minDate && p.x <= maxDate
+    );
+
+    const data = {
+      datasets: [{
+        label,
+        data: currentData,
+        borderColor: color,
+        fill: false,
+        tension: 0.0,
+        pointRadius: 5,
+      }],
+    };
+
+    const currentRangeLabel = TIME_RANGES.find(r => r.key === timeRange)?.label ?? timeRange;
+
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: `Courbe des mesures de ${label} (${currentRangeLabel})` },
+      },
+      scales: {
+        y: {
+          title: { display: true, text: `${label} (${yUnit})` },
+          grace: "10%",
+          ticks: { padding: 6 },
         },
-        scales: {
-          y: {
-            title: { display: true, text: `${label} (${yUnit})` },
-            grace: "10%",
-            ticks: { padding: 6 }
+        x: {
+          type: "time",
+          time: {
+            unit:
+              timeRange === "1D" ? "hour" :
+              timeRange === "7D" ? "day" :
+              timeRange === "1M" ? "day" :
+              dynamicAllUnit,
+            stepSize: 1,
+            tooltipFormat: "dd/MM/yyyy HH:mm",
+            displayFormats: { minute : "HH:mm", hour: "dd/MM HH:mm", day: "dd/MM", month: "MMM yyyy", year : "yyyy" },
           },
-          x: {
-            type: "time",
-            time: {
-              unit: timeRange === "1D" ? "hour" : "day",
-              stepSize: 1,
-              tooltipFormat: "dd/MM/yyyy HH:mm",
-              displayFormats: { hour: "dd/MM HH:mm", day: "dd/MM", month: "MMM yyyy" },
-            },
+          ...(timeRange !== "ALL" && {
             min: minDate,
             max: maxDate,
+          }),
+          ticks: {
+            display: true,
+            color: "#000",
+            padding: 8,
+          },
+
+          grid: {
+            display: true,           // ✅ FORCE la grille
+            drawTicks: true,
           },
         },
-      };
-      
-
-      return { data, options };
-    },
-    // Dépendances : Toutes les données, les fonctions/variables de temps et l'utilitaire Y
-    [
-        tempData, pressData, humidityData, pm1Data, pm25Data, pm10Data, co2Data, 
-        currentRangeLabel, unit, minDate, maxDate
-    ]
-  );
+      },
+    };
+    return { data, options };
+  },
+  [
+    tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, co2Data,
+    timeRange, referenceDate
+  ]
+);
   
   // Appel de la configuration dynamique pour le graphique sélectionné
   const { data: currentData, options: currentOptions } = getGraphConfig(graphType);
+ 
 
   const derivedOffset = computeOffsetFromRef(timeRange, referenceDate);
 
