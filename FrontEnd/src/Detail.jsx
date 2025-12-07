@@ -85,6 +85,8 @@ export default function DetailsPage() {
   const [gpsData, setGPSData] = React.useState([]); // Non utilisé pour Line chart, mais gardé
 
   const [referenceDate, setReferenceDate] = React.useState(new Date());
+  const [minDate, setMinDate] = React.useState(null);
+  const [maxDate, setMaxDate] = React.useState(null);
   const graphMenuRef = React.useRef(null);
   const timeMenuRef = React.useRef(null);
 
@@ -189,6 +191,25 @@ export default function DetailsPage() {
 
     fetchAllMeasurements();
   }, [id]); // Dépendance à 'id' pour re-fetch si la balise change
+
+  // Calcule les dates min/max à partir de toutes les mesures
+  React.useEffect(() => {
+    const allData = [tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, co2Data].flat();
+    
+    if (allData.length > 0) {
+      const dates = allData.map(d => new Date(d.x));
+      const minDt = new Date(Math.min(...dates.map(d => d.getTime())));
+      const maxDt = new Date(Math.max(...dates.map(d => d.getTime())));
+      
+      setMinDate(minDt);
+      setMaxDate(maxDt);
+      
+      // Si referenceDate n'est pas encore dans les limites, la réinitialise
+      if (referenceDate < minDt || referenceDate > maxDt) {
+        setReferenceDate(maxDt);
+      }
+    }
+  }, [tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, co2Data]);
 
   /* ---------------------------------------------------
         NAVIGATION TEMPORELLE
@@ -433,55 +454,56 @@ export default function DetailsPage() {
             <h2>Données de test : {beaconName} </h2>
           </center>
 
-          {/* MENU SEL. GRAPHIQUE */}
-          <div style={{ position: "relative", display: "inline-block" }}>
-            <button
-              onClick={() => setOpenGraphMenu(!openGraphMenu)}
-              className="py-2 px-4 rounded-lg text-sm font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300"
-            >
-              {GRAPH_TYPES.find((t) => t.key === graphType)?.label} ▼
-            </button>
-
-            {openGraphMenu && (
-              <div
-                ref={graphMenuRef}
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  background: "white",
-                  border: "1px solid #ccc",
-                  padding: "8px",
-                  borderRadius: "8px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                  zIndex: 50,
-                  minWidth: "150px",
-                }}
-              >
-                {GRAPH_TYPES.map((type) => (
-                  <button
-                    key={type.key}
-                    onClick={() => {
-                      setGraphType(type.key);
-                      setOpenGraphMenu(false);
-                    }}
-                    className={`py-2 px-4 rounded-lg text-sm font-semibold text-left ${
-                      graphType === type.key
-                        ? "bg-blue-600 text-white shadow"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    }`}
-                  >
-                    {type.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* CONTRÔLE TEMPS */}
+          {/* CONTRÔLES */}
           <div style={{ marginBottom: "20px", display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+            {/* MENU SEL. GRAPHIQUE */}
+            <div style={{ position: "relative", display: "inline-block" }}>
+              <button
+                onClick={() => setOpenGraphMenu(!openGraphMenu)}
+                className="py-2 px-4 rounded-lg text-sm font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300"
+              >
+                {GRAPH_TYPES.find((t) => t.key === graphType)?.label} ▼
+              </button>
+
+              {openGraphMenu && (
+                <div
+                  ref={graphMenuRef}
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    background: "white",
+                    border: "1px solid #ccc",
+                    padding: "8px",
+                    borderRadius: "8px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                    zIndex: 50,
+                    minWidth: "150px",
+                  }}
+                >
+                  {GRAPH_TYPES.map((type) => (
+                    <button
+                      key={type.key}
+                      onClick={() => {
+                        setGraphType(type.key);
+                        setOpenGraphMenu(false);
+                      }}
+                      className={`py-2 px-4 rounded-lg text-sm font-semibold text-left ${
+                        graphType === type.key
+                          ? "bg-blue-600 text-white shadow"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* MENU PÉRIODE */}
             <div style={{ position: "relative", display: "inline-block" }}>
               <button
                 onClick={() => setOpen(!open)}
@@ -525,42 +547,50 @@ export default function DetailsPage() {
               )}
             </div>
 
+            {/* CALENDRIER */}
+            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+              <label htmlFor="datePicker" style={{ fontSize: "14px", fontWeight: "500" }}>
+                📅
+              </label>
+              <input
+                id="datePicker"
+                type="date"
+                value={referenceDate.toISOString().split('T')[0]}
+                min={minDate ? minDate.toISOString().split('T')[0] : undefined}
+                max={maxDate ? maxDate.toISOString().split('T')[0] : undefined}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const selectedDate = new Date(e.target.value + 'T00:00:00');
+                    setReferenceDate(selectedDate);
+                  } else {
+                    // Si l'input est vide (bouton Effacer), réinitialise à la dernière date disponible
+                    if (maxDate) {
+                      setReferenceDate(maxDate);
+                    }
+                  }
+                }}
+                className="py-1 px-2 rounded-lg border border-gray-300 text-sm"
+                style={{ cursor: "pointer" }}
+              />
+            </div>
+
+            {/* BOUTONS NAVIGATION (uniquement si pas "Tout") */}
             {timeRange !== "ALL" && (
               <>
-                <div style={{ display: "flex", gap: "5px" }}>
-                  <button
-                    onClick={() => handleTimeShift(-1)}
-                    className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold"
-                  >
-                    &lt; Précédent
-                  </button>
+                <button
+                  onClick={() => handleTimeShift(-1)}
+                  className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold"
+                >
+                  &lt; Précédent
+                </button>
 
-                  <button
-                    onClick={() => handleTimeShift(1)}
-                    className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold"
-                    disabled={derivedOffset === 0}
-                  >
-                    Suivant &gt;
-                  </button>
-                </div>
-
-                {/* CALENDRIER POUR SÉLECTIONNER LA DATE */}
-                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                  <label htmlFor="datePicker" style={{ fontSize: "14px", fontWeight: "500" }}>
-                    📅
-                  </label>
-                  <input
-                    id="datePicker"
-                    type="date"
-                    value={referenceDate.toISOString().split('T')[0]}
-                    onChange={(e) => {
-                      const selectedDate = new Date(e.target.value + 'T00:00:00');
-                      setReferenceDate(selectedDate);
-                    }}
-                    className="py-1 px-2 rounded-lg border border-gray-300 text-sm"
-                    style={{ cursor: "pointer" }}
-                  />
-                </div>
+                <button
+                  onClick={() => handleTimeShift(1)}
+                  className="py-2 px-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-bold"
+                  disabled={derivedOffset === 0}
+                >
+                  Suivant &gt;
+                </button>
               </>
             )}
           </div>

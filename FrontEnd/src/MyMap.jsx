@@ -100,7 +100,10 @@ function ClusterLayer({points, setSelectedId}) {
   const navigate = useNavigate();
   const map = useMap();
   const [bounds, setBounds] = useState(map.getBounds());
-  const [zoom, setZoom] = useState(map.getZoom());
+  const [zoom, setZoom] = useState(map.getZoom() || 13); // Default to zoom 13
+  
+  console.log("ClusterLayer - points reçus:", points);
+  
   const handleMarkerClick = (id) => {
     // Navigue vers la même page avec un paramètre
     navigate(`/details/${id}`);
@@ -118,11 +121,63 @@ function ClusterLayer({points, setSelectedId}) {
 
   // Crée le cluster
   const cluster = useMemo(() => {
-    const index =new supercluster({
+    console.log("Chargement des points dans supercluster:", points);
+    if (points.length === 0) {
+      console.warn("⚠️ Aucun point à charger!");
+      return null;
+    }
+    
+    // Transformer les points au format GeoJSON attendu par supercluster
+    const geoJsonPoints = points.map(p => ({
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: p.position ? [p.position[1], p.position[0]] : [0, 0]  // Swap: API [lat, lon] → GeoJSON [lon, lat]
+      },
+      properties: {
+        id: p.id,
+        serial: p.serial,
+        name: p.name,
+        description: p.description,
+        avgTemp: p.avgTemp,
+        avgPressure: p.avgPressure,
+        avgHumidity: p.avgHumidity,
+        last_update: p.last_update
+      }
+    }));
+
+    console.log("✓ Points transformés en GeoJSON:", geoJsonPoints.length);
+    console.log("Sample point coordinates:", geoJsonPoints[0]?.geometry?.coordinates);
+    
+    const index = new supercluster({
       radius: 60, // distance de regroupement (en pixels)
       maxZoom: 18,
     });
-    index.load(points);
+    
+    // Charger les points GeoJSON valides
+    const validPoints = geoJsonPoints.filter(p => {
+      if (!p.geometry || !p.geometry.coordinates || p.geometry.coordinates.length !== 2) {
+        console.warn("❌ Point GeoJSON invalide:", p);
+        return false;
+      }
+      return true;
+    });
+    
+    console.log(`✓ ${validPoints.length}/${points.length} points valides`);
+    console.log("Sample valid point:", validPoints[0]);
+    
+    if (validPoints.length === 0) {
+      console.error("❌ Aucun point valide!");
+      return null;
+    }
+    
+    index.load(validPoints);
+    
+    // Test: récupérer les clusters à zoom 0
+    const testClusters = index.getClusters([-180, -90, 180, 90], 0);
+    console.log("✓ Test getClusters zoom 0:", testClusters.length, "clusters");
+    
+    console.log("Cluster créé avec", validPoints.length, "points");
     return index;
   }, [points]);
 
@@ -135,12 +190,54 @@ function ClusterLayer({points, setSelectedId}) {
   ];
 
   // Récupère les clusters visibles
+  // FIX: Vérifier que zoom et bbox sont valides
+  if (zoom === undefined || zoom === null || !cluster) {
+    console.log("⚠️ Cluster pas prêt, affichage des points bruts");
+    return (
+      <>
+        {points.map((point) => {
+          // Gérer les deux formats possibles
+          let latitude, longitude, id;
+          
+          if (point.geometry && point.geometry.coordinates) {
+            [longitude, latitude] = point.geometry.coordinates;
+          } else if (point.position) {
+            [longitude, latitude] = point.position;
+          } else {
+            console.warn("Point sans coordonnées:", point);
+            return null;
+          }
+          
+          id = point.id || point.properties?.id;
+          
+          return (
+            <Marker
+              key={`point-${id}`}
+              position={[latitude, longitude]}
+              icon={customIcon}
+              eventHandlers={{
+                click: () => {
+                  setSelectedId(id);
+                },
+              }}
+            />
+          );
+        })}
+      </>
+    );
+  }
+
   const clusters = cluster.getClusters(bbox, Math.round(zoom));
+  console.log("Query params - bbox:", bbox, "zoom:", Math.round(zoom));
+  console.log("Clusters visibles:", clusters, "zoom:", Math.round(zoom), "bbox:", bbox);
+  
   return (
   <>
     {clusters.map((feature) => {
-      const [longitude, latitude] = feature.position;
-      const { cluster: isCluster, point_count: pointCount } = { cluster: false, id: feature.id };
+      const [longitude, latitude] = feature.geometry.coordinates;
+      const isCluster = feature.properties?.cluster;
+      const pointCount = feature.properties?.point_count;
+      const id = feature.id || feature.properties?.id;
 
       if (isCluster) {
         return (
@@ -163,13 +260,13 @@ function ClusterLayer({points, setSelectedId}) {
 
       return (
         <Marker
-  key={`point-${feature.id}`}
+  key={`point-${id}`}
   position={[latitude, longitude]}
   icon={customIcon}
   eventHandlers={{
     click: () => {
       // Surbrillance du widget ET ouvre les détails
-      setSelectedId(feature.id);
+      setSelectedId(id);
     },
   }}
 />
@@ -184,10 +281,18 @@ function ClusterLayer({points, setSelectedId}) {
 function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
+  const widgetRef = React.useRef(null);
 
   // Synchronise l'affichage des détails avec la sélection
   useEffect(() => {
     setShowDetails(isSelected);
+  }, [isSelected]);
+
+  // Scroll vers le widget quand il est sélectionné
+  useEffect(() => {
+    if (isSelected && widgetRef.current) {
+      widgetRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }, [isSelected]);
 
 
@@ -200,6 +305,7 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
 
   return (
     <div
+      ref={widgetRef}
       onClick={() => navigate(`/details/${feature.id}`)} // redirige vers la page détaillée
       style={{
         position: "relative",
@@ -262,7 +368,7 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
   );
 }
 
-export default function MyMap() {
+function MyMap({ beacons }) {
   const [selectedId, setSelectedId] = useState(null);
   const [markers, setMarkers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -312,16 +418,16 @@ export default function MyMap() {
               }
 
               return {
+                id: data.id,
                 name: data.name || "Balise sans nom",
-                description: data.description || "",
                 serial: data.serial || "",
-                properties: { cluster: false, id: data.id },
-                geometry: { coordinates: [longitude, latitude] },
-                times: [data.last_update || new Date().toISOString()],
-                mesureT: [0],
-                mesureH: [],
-                mesureCo: [],
-                mesureP: []
+                description: data.description || "",
+                position: [longitude, latitude],
+                properties: { cluster: false },
+                geometry: {
+                  type: "Point",
+                  coordinates: [longitude, latitude]
+                }
               };
             } catch (err) {
               console.warn(`Erreur pour la balise ${beacon.id}:`, err.message);
@@ -389,10 +495,12 @@ export default function MyMap() {
       </div>
 
 {/* ========== CONTENU PRINCIPAL : BANDEAU + CARTE ========== */}
-<div style={{ flex: 1, display: "flex" }}>
+<div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
   
   {/* Bandeau widgets à gauche */}
-  <div style={{ width: "300px", overflowY: "auto", background: "#fff", padding: "10px", borderRight: "1px solid #ddd" }}>
+  <div 
+    style={{ width: "300px", overflowY: "auto", overflowX: "hidden", background: "#fff", padding: "10px", borderRight: "1px solid #ddd" }}
+  >
     {beacons.map((feature) => (
       <WidgetItem
         key={feature.id}
