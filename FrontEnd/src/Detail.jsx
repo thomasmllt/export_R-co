@@ -85,6 +85,9 @@ export default function DetailsPage() {
   const [gpsData, setGPSData] = React.useState([]); // Non utilisé pour Line chart, mais gardé
 
   const [referenceDate, setReferenceDate] = React.useState(new Date());
+  const graphMenuRef = React.useRef(null);
+  const timeMenuRef = React.useRef(null);
+
 
   /* ---------------------------------------------------
         LIMITE TEMPS
@@ -171,7 +174,9 @@ export default function DetailsPage() {
                 const data = await response.json();
                 
                 // Formate les données pour TimeScale: {x: Date, y: value}
-                const formattedData = data.map((d) => ({ x: new Date(d.timestamp), y: d.value }));
+                const formattedData = data.map((d) => {const date = new Date(d.timestamp);
+                  date.setHours(date.getHours() - 1); // <-- décale d'une heure
+                  return { x: date, y: d.value };});
                 setter(formattedData);
             } catch (err) {
                 console.error(error + " :", err);
@@ -188,6 +193,20 @@ export default function DetailsPage() {
   /* ---------------------------------------------------
         NAVIGATION TEMPORELLE
   ---------------------------------------------------- */
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (graphMenuRef.current && !graphMenuRef.current.contains(event.target)) {
+        setOpenGraphMenu(false);
+      }
+      if (timeMenuRef.current && !timeMenuRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleTimeShift = (direction) => {
     // ... (inchangé)
     let newRef = new Date(referenceDate);
@@ -363,12 +382,14 @@ export default function DetailsPage() {
           }),
           ticks: {
             display: true,
+            autoSkip: true,       
+            maxTicksLimit: 31,
             color: "#000",
             padding: 8,
           },
 
           grid: {
-            display: true,           // ✅ FORCE la grille
+            display: true,         
             drawTicks: true,
           },
         },
@@ -423,6 +444,7 @@ export default function DetailsPage() {
 
             {openGraphMenu && (
               <div
+                ref={graphMenuRef}
                 style={{
                   position: "absolute",
                   top: "100%",
@@ -470,6 +492,7 @@ export default function DetailsPage() {
 
               {open && (
                 <div
+                  ref={timeMenuRef}
                   style={{
                     position: "absolute",
                     top: "100%",
