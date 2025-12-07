@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import * as EL from 'esri-leaflet';
 import L from "leaflet";
 import supercluster from "supercluster";
-import { markers, puntos } from "./markers";
 import logo from "./assets/logo_def-07.png";
 import locIcon from "./assets/loc.png";
 
@@ -219,13 +218,101 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
   );
 }
 
-
-export default function MyMap_test() {
+export default function MyMap() {
   const [selectedId, setSelectedId] = useState(null);
+  const [markers, setMarkers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Récupère les balises depuis la base de données
+  useEffect(() => {
+    // Définit le titre de la page
+    document.title = "Carte";
+
+    const fetchBeacons = async () => {
+      try {
+        // Récupère la liste de toutes les balises
+        const beaconsRes = await fetch("https://r-co-api.onrender.com/beacon");
+        const beaconIds = await beaconsRes.json();
+
+        // Pour chaque balise, récupère ses données complètes
+        const markersData = await Promise.all(
+          beaconIds.map(async (beacon) => {
+            try {
+              const res = await fetch(`https://r-co-api.onrender.com/beacon/${beacon.id}`);
+              
+              // Vérifie que la réponse est valide
+              if (!res.ok) {
+                console.warn(`Balise ${beacon.id} non disponible (HTTP ${res.status}), ignorée`);
+                return null;
+              }
+
+              // Vérifie que la réponse est du JSON
+              const contentType = res.headers.get("content-type");
+              if (!contentType || !contentType.includes("application/json")) {
+                console.warn(`Réponse non-JSON pour la balise ${beacon.id}, ignorée`);
+                return null;
+              }
+
+              const data = await res.json();
+
+              // Parse la position (format: "lat,lon" ou format géométrique)
+              let latitude = 48.8566;
+              let longitude = 2.3522;
+
+              if (data.position) {
+                const coords = data.position.split(",").map(c => parseFloat(c.trim()));
+                if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                  latitude = coords[0];
+                  longitude = coords[1];
+                }
+              }
+
+              return {
+                name: data.name || "Balise sans nom",
+                description: data.description || "",
+                serial: data.serial || "",
+                properties: { cluster: false, id: data.id },
+                geometry: { coordinates: [longitude, latitude] },
+                times: [data.last_update || new Date().toISOString()],
+                mesureT: [0],
+                mesureH: [],
+                mesureCo: [],
+                mesureP: []
+              };
+            } catch (err) {
+              console.warn(`Erreur pour la balise ${beacon.id}:`, err.message);
+              return null;
+            }
+          })
+        );
+
+        // Filtre les balises null et met à jour l'état
+        setMarkers(markersData.filter(m => m !== null));
+      } catch (err) {
+        console.error("Erreur lors de la récupération des balises:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBeacons();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        fontSize: "1.2rem"
+      }}>
+        Chargement des balises...
+      </div>
+    );
+  }
 
   return (
-    <div>
-    <title>{"Carte"}</title>
     <div style={{
       display: "flex",
       flexDirection: "column",
@@ -292,6 +379,5 @@ export default function MyMap_test() {
 
 </div>
     </div>
-  </div>
   );
 }
