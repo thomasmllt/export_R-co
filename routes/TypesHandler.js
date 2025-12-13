@@ -3,10 +3,9 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 
-// ------------------- CRUD Types de Mesure -------------------
+// Ce fichier gère les routes pour gérer les types de mesures. Il peut etre utilisé pour la conception et l'amélioration de la base de données.
 
-
-// ----------- GET -----------
+// ------------------------   GET   ------------------------
 
 
 // GET all types :OK
@@ -38,7 +37,7 @@ router.get("/:id", async (req, res) => {
 
 
 
-// ----------- PUT -----------
+// ------------------------   PUT   ------------------------
 
 // PUT update type : Name OKKKK
 router.put("/:id/name", async (req, res) => {
@@ -61,7 +60,7 @@ router.put("/:id/name", async (req, res) => {
   }
 });
 
-// PUT update type : Unit OKKKK
+// PUT update type : Unit Ok
 router.put("/:id/unit", async (req, res) => {
   const { id } = req.params;
   const { unit } = req.body;
@@ -83,7 +82,7 @@ router.put("/:id/unit", async (req, res) => {
 });
 
 
-// PUT update type : Description OKKKK
+// PUT update type : Description Ok
 router.put("/:id/description", async (req, res) => {
   const { id } = req.params;
   const { description } = req.body;
@@ -105,7 +104,7 @@ router.put("/:id/description", async (req, res) => {
 });
 
 
-// ----------- POST -----------
+// ------------------------   POST   ------------------------
 
 
 // POST create new type : OK
@@ -143,7 +142,7 @@ router.post("/", async (req, res) => {
 
 
 
-// ----------- DELETE -----------
+// ------------------------   DELETE   ------------------------
 
 
 
