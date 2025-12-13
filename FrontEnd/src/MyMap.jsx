@@ -1,6 +1,6 @@
 import './MyMap.css'
 import React, { useMemo,useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker,Popup, useMap, useMapEvents} from 'react-leaflet';
+import { MapContainer, Marker, useMap} from 'react-leaflet';
 import { useNavigate } from "react-router-dom";
 import * as EL from 'esri-leaflet';
 import L from "leaflet";
@@ -8,21 +8,19 @@ import supercluster from "supercluster";
 import logo from "./assets/logo_def-07.png";
 import locIcon from "./assets/loc.png";
 
+
+/*Chargement des balises*/
 async function loadBeacons() {
   try {
-    // Fetch list of beacon IDs
-    //const res = await fetch("http://localhost:3000/beacon");
     const res = await fetch("https://r-co-api.onrender.com/beacon");
-    const idList = await res.json(); // -> [{id:1},{id:2}...]
-    // Fetch details for each beacon in parallel
+    const idList = await res.json();
     const detailPromises = idList.map(async (b) => {
-      //const r = await fetch(`http://localhost:3000/beacon/${b.id}`);
       const r = await fetch(`https://r-co-api.onrender.com/beacon/${b.id}`);
       const rjson = await r.json();
       if (rjson.position) {
         rjson.position = rjson.position.split(',').map(Number);
       }
-      return rjson; // -> {id, serial, name, position, description, last_update...}
+      return rjson; // rjson est de la forme {id, serial, name, position, description, last_update...}
     });
 
     return await Promise.all(detailPromises);
@@ -32,51 +30,30 @@ async function loadBeacons() {
   }
 }
 
-
-export default function MyMapInit() {
-
-  const [loading, setLoading] = useState(true);
-  const [beacons, setBeacons] = useState([]);
-
-  useEffect(() => {
-    async function fetchData() {
-      const data = await loadBeacons();
-      setBeacons(data);
-      setLoading(false);
-    }
-    fetchData();
-  }, []);
-
-  if (loading) return <p>Loading...</p>;
-  if (beacons.length == 0) return <p>No beacon found.</p>;
-
-  return <MyMap beacons={beacons} />;
-}
-
-
+/*Coordonnées limites de la carte*/
 const bounds = L.latLngBounds(
   [-85, -180], // Sud-Ouest
   [85, 180]    // Nord-Est
 );
 
+/*Création du layout de la carte*/
 function EsriImageryLayer() {
   const map = useMap();
   useEffect(() => {
-    // basemapLayer gère correctement la couche Esri
     const layer = EL.basemapLayer('Imagery', { minZoom : 3 ,maxZoom: 17, noWrap : true }).addTo(map);
     return () => map.removeLayer(layer);
   }, [map]);
   return null;
 }
 
+/*Création de l'icone des balises */
 const customIcon = new L.Icon({
-  iconUrl: locIcon, // chemin vers ton icône
-  iconSize: [42, 42], // taille de l'icône
-  iconAnchor: [16, 32], // point de l'icône qui correspond à la position du marker
-  popupAnchor: [0, -32], // position du popup par rapport à l'icône
+  iconUrl: locIcon,
+  iconSize: [42, 42], 
+  iconAnchor: [16, 32],
 });
 
-
+/*Création de l'icone des regroupements de balises */
 const createClusterIcon = (count) =>
   L.divIcon({
     html: `<div style="
@@ -95,23 +72,14 @@ const createClusterIcon = (count) =>
     iconSize: [40, 40],
 });
 
-
-
-
+/*Créations des points sur la carte en considérant s'il y a des regroupements*/
 function ClusterLayer({points, setSelectedId}) {
-  const navigate = useNavigate();
   const map = useMap();
   const [bounds, setBounds] = useState(map.getBounds());
-  const [zoom, setZoom] = useState(map.getZoom() || 13); // Default to zoom 13
+  const [zoom, setZoom] = useState(map.getZoom() || 13);
   
   console.log("ClusterLayer - points reçus:", points);
-  
-  const handleMarkerClick = (id) => {
-    // Navigue vers la même page avec un paramètre
-    navigate(`/details/${id}`);
-  };
 
-  // Mets à jour les bounds & zoom quand on bouge
   useEffect(() => {
     const update = () => {
       setBounds(map.getBounds());
@@ -121,20 +89,18 @@ function ClusterLayer({points, setSelectedId}) {
     return () => map.off("moveend", update);
   }, [map]);
 
-  // Crée le cluster
   const cluster = useMemo(() => {
-    console.log("Chargement des points dans supercluster:", points);
+    console.log("Chargement des points dans le supercluster:", points);
     if (points.length === 0) {
-      console.warn("⚠️ Aucun point à charger!");
+      console.warn("Aucun point à charger!");
       return null;
     }
     
-    // Transformer les points au format GeoJSON attendu par supercluster
     const geoJsonPoints = points.map(p => ({
       type: "Feature",
       geometry: {
         type: "Point",
-        coordinates: p.position ? [p.position[1], p.position[0]] : [0, 0]  // Swap: API [lat, lon] → GeoJSON [lon, lat]
+        coordinates: p.position ? [p.position[1], p.position[0]] : [0, 0]
       },
       properties: {
         id: p.id,
@@ -148,42 +114,35 @@ function ClusterLayer({points, setSelectedId}) {
       }
     }));
 
-    console.log("✓ Points transformés en GeoJSON:", geoJsonPoints.length);
-    console.log("Sample point coordinates:", geoJsonPoints[0]?.geometry?.coordinates);
+    console.log("Points transformés en GeoJSON:", geoJsonPoints.length);
     
     const index = new supercluster({
-      radius: 60, // distance de regroupement (en pixels)
+      radius: 60,
       maxZoom: 18,
     });
     
-    // Charger les points GeoJSON valides
     const validPoints = geoJsonPoints.filter(p => {
       if (!p.geometry || !p.geometry.coordinates || p.geometry.coordinates.length !== 2) {
-        console.warn("❌ Point GeoJSON invalide:", p);
+        console.warn("Point GeoJSON invalide:", p);
         return false;
       }
       return true;
     });
     
-    console.log(`✓ ${validPoints.length}/${points.length} points valides`);
+    console.log(`${validPoints.length}/${points.length} points valides`);
     console.log("Sample valid point:", validPoints[0]);
     
     if (validPoints.length === 0) {
-      console.error("❌ Aucun point valide!");
+      console.error("Aucun point valide!");
       return null;
     }
     
     index.load(validPoints);
     
-    // Test: récupérer les clusters à zoom 0
-    const testClusters = index.getClusters([-180, -90, 180, 90], 0);
-    console.log("✓ Test getClusters zoom 0:", testClusters.length, "clusters");
-    
     console.log("Cluster créé avec", validPoints.length, "points");
     return index;
   }, [points]);
 
-  // Convertit les bounds Leaflet en bbox
   const bbox = [
     bounds.getWest(),
     bounds.getSouth(),
@@ -191,14 +150,11 @@ function ClusterLayer({points, setSelectedId}) {
     bounds.getNorth(),
   ];
 
-  // Récupère les clusters visibles
-  // FIX: Vérifier que zoom et bbox sont valides
   if (zoom === undefined || zoom === null || !cluster) {
-    console.log("⚠️ Cluster pas prêt, affichage des points bruts");
+    console.log("Cluster pas prêt, affichage des points bruts");
     return (
       <>
         {points.map((point) => {
-          // Gérer les deux formats possibles
           let latitude, longitude, id;
           
           if (point.geometry && point.geometry.coordinates) {
@@ -262,48 +218,42 @@ function ClusterLayer({points, setSelectedId}) {
 
       return (
         <Marker
-  key={`point-${id}`}
-  position={[latitude, longitude]}
-  icon={customIcon}
-  eventHandlers={{
-    click: () => {
-      // Surbrillance du widget ET ouvre les détails
-      setSelectedId(id);
-    },
-  }}
-/>
-
+          key={`point-${id}`}
+          position={[latitude, longitude]}
+          icon={customIcon}
+          eventHandlers={{
+            click: () => {
+              // Surbrillance du widget ET ouvre les détails
+              setSelectedId(id);
+            },
+          }}
+        />
       );
     })}
   </>
-);
+  );
 }
 
-
+/*Création d'un bloc de description d'une balise */
 function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
   const widgetRef = React.useRef(null);
 
-  // Synchronise l'affichage des détails avec la sélection
   useEffect(() => {
     setShowDetails(isSelected);
   }, [isSelected]);
 
-  // Scroll vers le widget quand il est sélectionné
   useEffect(() => {
     if (isSelected && widgetRef.current) {
       widgetRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [isSelected]);
 
-
-  // Calcul des moyennes et date
   const avgTemp = feature.avgTemp;
   const avgPressure = feature.avgPressure;
   const avgHumidity = feature.avgHumidity;
   const lastUpdate = feature.last_update ? new Date(new Date(feature.last_update).getTime() - 60 * 60 * 1000) : null;
-  //console.log("last update = ", lastUpdate);
 
   const formatValue = (value, unit) =>
   value !== null && value !== undefined
@@ -347,13 +297,11 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
         </div>
       )}
 
-      {/* Flèche en bas à droite */}
       <span
         onClick={(e) => {
-          e.stopPropagation(); // empêche le clic parent de naviguer
+          e.stopPropagation();
           const newState = !showDetails;
           setShowDetails(newState);
-          // Si on ouvre les détails, on surligne aussi
           if (newState) {
             setSelectedId(feature.id);
           } else {
@@ -374,35 +322,27 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
   );
 }
 
+/*Création de la page*/
 function MyMap({ beacons }) {
   const [selectedId, setSelectedId] = useState(null);
   const [markers, setMarkers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Récupère les balises depuis la base de données
   useEffect(() => {
-    // Définit le titre de la page
     document.title = "Carte Balises";
 
     const fetchBeacons = async () => {
       try {
-        // Récupère la liste de toutes les balises
         const beaconsRes = await fetch("https://r-co-api.onrender.com/beacon");
         const beaconIds = await beaconsRes.json();
-
-        // Pour chaque balise, récupère ses données complètes
         const markersData = await Promise.all(
           beaconIds.map(async (beacon) => {
             try {
               const res = await fetch(`https://r-co-api.onrender.com/beacon/${beacon.id}`);
-              
-              // Vérifie que la réponse est valide
               if (!res.ok) {
                 console.warn(`Balise ${beacon.id} non disponible (HTTP ${res.status}), ignorée`);
                 return null;
               }
-
-              // Vérifie que la réponse est du JSON
               const contentType = res.headers.get("content-type");
               if (!contentType || !contentType.includes("application/json")) {
                 console.warn(`Réponse non-JSON pour la balise ${beacon.id}, ignorée`);
@@ -410,8 +350,6 @@ function MyMap({ beacons }) {
               }
 
               const data = await res.json();
-
-              // Parse la position (format: "lat,lon" ou format géométrique)
               let latitude = 48.8566;
               let longitude = 2.3522;
 
@@ -441,8 +379,6 @@ function MyMap({ beacons }) {
             }
           })
         );
-
-        // Filtre les balises null et met à jour l'état
         setMarkers(markersData.filter(m => m !== null));
       } catch (err) {
         console.error("Erreur lors de la récupération des balises:", err);
@@ -478,7 +414,6 @@ function MyMap({ beacons }) {
       padding: 0,
       background: "#eee"
     }}>
-      {/* ========== BANDEAU EN HAUT ========== */}
       <div style={{
         display: "flex",
         justifyContent: "space-between",
@@ -488,54 +423,66 @@ function MyMap({ beacons }) {
         boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
         zIndex: 1000
       }}>
-        {/* Logo + Nom */}
         <div style={{ display: "flex", alignItems: "center" }}>
           <img src={logo} alt="Renardo" style={{ height: "40px", marginRight: "10px" }} />
         </div>
-
-        {/* Lien externe */}
         <a href="https://www.renardo-tech.fr/" target="_blank" rel="noopener noreferrer"
           style={{ textDecoration: "none", color: "#007BFF", fontWeight: "bold", fontSize: "1rem" }}>
           Notre site web
         </a>
       </div>
 
-{/* ========== CONTENU PRINCIPAL : BANDEAU + CARTE ========== */}
-<div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-  
-  {/* Bandeau widgets à gauche */}
-  <div 
-    style={{ width: "300px", overflowY: "auto", overflowX: "hidden", background: "#fff", padding: "10px", borderRight: "1px solid #ddd" }}
-  >
-    {beacons.map((feature) => (
-      <WidgetItem
-        key={feature.id}
-        feature={feature}
-        isSelected={selectedId === feature.id}
-        setSelectedId={setSelectedId}
-      />
-    ))}
-  </div>
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        <div style={{ width: "300px", overflowY: "auto", overflowX: "hidden", background: "#fff", padding: "10px", borderRight: "1px solid #ddd" }}>
+          {beacons.map((feature) => (
+            <WidgetItem
+              key={feature.id}
+              feature={feature}
+              isSelected={selectedId === feature.id}
+              setSelectedId={setSelectedId}
+            />
+          ))}
+        </div>
 
-  {/* Carte à droite */}
-  <div style={{ flex: 1 }}>
-    <MapContainer
-      center={[47, 2.3522]}
-      zoom={6}
-      scrollWheelZoom={true}
-      maxBounds={bounds}
-      maxBoundsViscosity={1}
-      style={{ height: "100%", width: "100%" }}
-    >
-      <EsriImageryLayer />
-      <ClusterLayer
-        points={beacons}
-        setSelectedId={setSelectedId}
-      />
-    </MapContainer>
-  </div>
+        <div style={{ flex: 1 }}>
+          <MapContainer
+            center={[47, 2.3522]}
+            zoom={6}
+            scrollWheelZoom={true}
+            maxBounds={bounds}
+            maxBoundsViscosity={1}
+            style={{ height: "100%", width: "100%" }}
+          >
+            <EsriImageryLayer/>
+            <ClusterLayer
+              points={beacons}
+              setSelectedId={setSelectedId}
+            />
+          </MapContainer>
+        </div>
 
-</div>
+      </div>
     </div>
   );
+}
+
+/*Initialisation de la page (chargement des balises) puis appel à la fonction de création de la page*/
+export default function MyMapInit() {
+
+  const [loading, setLoading] = useState(true);
+  const [beacons, setBeacons] = useState([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      const data = await loadBeacons();
+      setBeacons(data);
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  if (loading) return <p>Chargement...</p>;
+  if (beacons.length == 0) return <p>Pas de balises.</p>;
+
+  return <MyMap beacons={beacons} />;
 }
