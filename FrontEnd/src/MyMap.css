@@ -21,7 +21,7 @@ html, body, #root {
 
 .footer-info {
   position: absolute;
-  bottom: 10px; /* distance depuis le bas */
+  bottom: 10px;
   left: 10px;
   font-size: 0.9em;
   color: #666;

@@ -49,10 +49,9 @@ const GRAPH_TYPES = [
   { label: "PM 2.5", key: "pm25", measurementId: 5, unit: "µg/m³", color: "#f97316" },
   { label: "PM 10", key: "pm10", measurementId: 6, unit: "µg/m³", color: "#d97706" },
   { label: "CO2", key: "co2", measurementId: 8, unit: "ppm", color: "#ef4444" },
-  // NOTE: GPS (measurementId: 9) est un cas spécial (lat/lng) et n'est pas pris en charge par Line chart
 ];
 
-// Mappage des clés de type de graphique aux noms de l'état
+// Mappage des clés des types de graphiques 
 const DATA_STATE_KEYS = {
     "temp": "tempData",
     "humidity": "humidityData",
@@ -73,8 +72,11 @@ export default function DetailsPage() {
   const [openGraphMenu, setOpenGraphMenu] = React.useState(false);
   const [open, setOpen] = React.useState(false);
 
+  // États pour les informations de la balise
   const [beaconName, setBeaconName] = React.useState("Chargement...");
   const [beaconDescription, setBeaconDescription] = React.useState("Chargement...");
+
+
   // États pour les données
   const [tempData, setTempData] = React.useState([]);
   const [humidityData, setHumidityData] = React.useState([]);
@@ -83,7 +85,6 @@ export default function DetailsPage() {
   const [pm25Data, setPM25Data] = React.useState([]);
   const [pm10Data, setPM10Data] = React.useState([]);
   const [co2Data, setCO2Data] = React.useState([]);
-  const [gpsData, setGPSData] = React.useState([]); // Non utilisé pour Line chart, mais gardé
 
   const [referenceDate, setReferenceDate] = React.useState(new Date());
   const [minDate, setMinDate] = React.useState(null);
@@ -95,39 +96,9 @@ export default function DetailsPage() {
   /* ---------------------------------------------------
         LIMITE TEMPS
   ---------------------------------------------------- */
-  const getTimeRangeLimits = React.useCallback(
-    (range, refDate) => {
-      // ... (inchangé)
-      if (range === "ALL") {
-        return { min: undefined, max: undefined, label: "Tout" };
-      }
 
-      let minDate, maxDate;
-
-      if (range === "1D") {
-        minDate = startOfDay(refDate);
-        maxDate = endOfDay(refDate);
-      } else if (range === "7D") {
-        const d = new Date(refDate);
-        const day = d.getDay();
-        const daysFromMonday = day === 0 ? 6 : day - 1;
-        const monday = startOfDay(subDays(d, daysFromMonday));
-        minDate = monday;
-        maxDate = endOfDay(addDays(monday, 6));
-      } else if (range === "1M") {
-        const d = new Date(refDate);
-        minDate = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0);
-        maxDate = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
-      }
-
-      const rangeLabel = TIME_RANGES.find((r) => r.key === range)?.label ?? range;
-      return { min: minDate, max: maxDate, label: rangeLabel };
-    },
-    []
-  );
-
+  // Fonction pour calculer le décalage en unités de temps entre la date de référence et aujourd'hui
   const computeOffsetFromRef = (range, refDate) => {
-    // ... (inchangé)
     const now = new Date();
     if (range === "ALL") return 0;
     const diffMs = now.setHours(0, 0, 0, 0) - new Date(refDate).setHours(0, 0, 0, 0);
@@ -138,27 +109,26 @@ export default function DetailsPage() {
   };
 
   /* ---------------------------------------------------
-        FETCH DATA
+        FETCH DATA : Récupération des données depuis le backend
   ---------------------------------------------------- */
   React.useEffect(() => {
+    // Récupère le nom de la balise
     async function fetchBeaconName() {
-      // ... (inchangé)
       try {
-        const response = await fetch(`https://r-co-api.onrender.com/beacon/${id}/name`);
+        const response = await fetch(`https://r-co-api.onrender.com/beacon/${id}/name`); // Appel à la route backend correspondant à la récupération du nom
         const data = await response.json();
-        setBeaconName(data.name);
-      } catch (error) {
+        setBeaconName(data.name); // Met à jour l'état avec le nom récupéré
+      } catch (error) { 
         console.error("Erreur backend :", error);
         setBeaconName("Erreur lors du chargement");
       }
     }
-
+    //Récupère la description de la balise
     async function fetchBeaconDescription() {
       try {
-        // Supposons que cet endpoint renvoie { description: "..." }
-        const response = await fetch(`https://r-co-api.onrender.com/beacon/${id}/description`); 
+        const response = await fetch(`https://r-co-api.onrender.com/beacon/${id}/description`); // Appel à la route backend correspondant à la récupération de la description
         const data = await response.json();
-        setBeaconDescription(data.description || "Pas de description fournie.");
+        setBeaconDescription(data.description || "Pas de description fournie."); // Met à jour l'état avec la description récupérée
       } catch (error) {
         console.error("Erreur backend pour la description :", error);
         setBeaconDescription("Erreur lors du chargement de la description.");
@@ -174,7 +144,7 @@ export default function DetailsPage() {
   }, [id]);
 
   React.useEffect(() => {
-    // Mappage de toutes les mesures à récupérer avec leur setter d'état correspondant
+    // Mappage de toutes les mesures à récupérer avec leur id correspondant à la base de données
     const MEASUREMENT_MAPPINGS = [
         { id: 1, setter: setTempData, error: "Erreur temp" },
         { id: 2, setter: setHumidityData, error: "Erreur humidité" },
@@ -183,14 +153,13 @@ export default function DetailsPage() {
         { id: 6, setter: setPM25Data, error: "Erreur PM 2.5" },
         { id: 7, setter: setPM10Data, error: "Erreur PM 10" },
         { id: 9, setter: setCO2Data, error: "Erreur CO2" },
-        { id: 10, setter: setGPSData, error: "Erreur GPS" }, // Non utilisé pour Line Chart
     ];
 
     async function fetchAllMeasurements() {
-        // Exécution des requêtes en parallèle (ou séquentiellement si le backend est sensible)
+        // Récupère toutes les mesures en parallèle, selon le mappage défini précédemment
         const fetchPromises = MEASUREMENT_MAPPINGS.map(async ({ id: measurementId, setter, error }) => {
             try {
-                const response = await fetch(`https://r-co-api.onrender.com/measurement/${id}/${measurementId}`);
+                const response = await fetch(`https://r-co-api.onrender.com/measurement/${id}/${measurementId}`); // Appel à la route backend correspondant à la récupération des mesures
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 
@@ -201,7 +170,7 @@ export default function DetailsPage() {
                 setter(formattedData);
             } catch (err) {
                 console.error(error + " :", err);
-                setter([]); // Vider les données en cas d'erreur
+                setter([]); // Sécurité : On vide les données en cas d'erreur
             }
         });
         
@@ -209,9 +178,10 @@ export default function DetailsPage() {
     }
 
     fetchAllMeasurements();
-  }, [id]); // Dépendance à 'id' pour re-fetch si la balise change
+  }, [id]); 
 
-  // Calcule les dates min/max à partir de toutes les mesures
+  // Calcule les dates min/max à partir de toutes les mesures : on les utilise pour limiter le sélecteur de date
+  
   React.useEffect(() => {
     const allData = [tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, co2Data].flat();
     
@@ -228,11 +198,14 @@ export default function DetailsPage() {
         setReferenceDate(maxDt);
       }
     }
-  }, [tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, co2Data]);
+  }, [tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, co2Data]); 
+  
 
   /* ---------------------------------------------------
-                NAVIGATION TEMPORELLE
+                NAVIGATION TEMPORELLE : Quand on clique sur les fleches et boutons
   ---------------------------------------------------- */
+  // Gestion de la fermeture des menus au clic en dehors : Permet de fermer les menus déroulants quand on clique en dehors des boutons
+
   React.useEffect(() => {
     const handleClickOutside = (event) => {
       if (graphMenuRef.current && !graphMenuRef.current.contains(event.target)) {
@@ -247,79 +220,83 @@ export default function DetailsPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+
+  // Déplace la référence temporelle (referenceDate) d'une unité lorsque l'on clique un bouton
   const handleTimeShift = (direction) => {
-    // ... (inchangé)
     let newRef = new Date(referenceDate);
 
+    // Ajoute ou soustrait 1 jour/semaine/mois selon le timeRange
     if (timeRange === "1D") newRef = addDays(referenceDate, direction);
     else if (timeRange === "7D") newRef = addWeeks(referenceDate, direction);
     else if (timeRange === "1M") newRef = addMonths(referenceDate, direction);
 
     setReferenceDate(newRef);
   };
-
+  // Fonction qui permet de passer à la nouvelle plage de période sélectionnée en conservant le point d'ancrage le plus pertinent 
   const handleTimeRangeChange = (newRange) => {
-    // ... (inchangé)
     const oldRange = timeRange;
     const oldRef = new Date(referenceDate);
 
     let anchor = new Date(oldRef);
 
+    // Si on quitte 7 jours, on ancre la référence au début de la semaine
     if (oldRange === "7D") {
       const day = anchor.getDay();
       const diffToMonday = (day + 6) % 7;
       anchor.setDate(anchor.getDate() - diffToMonday);
     }
 
+    // Si on quitte 1 mois, on ancre la référence au début du mois
     if (oldRange === "1M") {
       anchor = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
     }
-
+    // Si on quitte 1 jour, on ancre la référence au début du jour
     if (oldRange === "1D") {
       anchor = startOfDay(anchor);
     }
 
     let newRef = new Date(anchor);
 
+    // Si la nouvelle période est 7 jours, on ajuste pour que la référence soit au début de la semaine
     if (newRange === "7D") {
       const day = newRef.getDay();
       const diffToMonday = (day + 6) % 7;
       newRef.setDate(newRef.getDate() - diffToMonday);
     }
-
+    // Si la nouvelle période est 1 mois, on ajuste pour que la référence soit au début du mois
     if (newRange === "1M") {
       newRef = new Date(newRef.getFullYear(), newRef.getMonth(), 1);
     }
 
+    // Si la nouvelle période est 1 jour, on ajuste pour que la référence soit au début du jour
     if (newRange === "1D") {
       newRef = startOfDay(newRef);
     }
 
+    // Mise à jour des états et de la période
     setTimeRange(newRange);
     setReferenceDate(newRef);
     setOpen(false);
   };
 
-  /* ---------------------------------------------------
-        CALCUL DES LIMITES X
-  ---------------------------------------------------- */
-  /*const { min: minDate, max: maxDate, label: currentRangeLabel } =
-    getTimeRangeLimits(timeRange, referenceDate);
-  const unit = timeRange === "1D" ? "hour" : "day";*/
+  
 
   /* ---------------------------------------------------
         FONCTIONS UTILITAIRES DE GRAPHIQUE
   ---------------------------------------------------- */
 
-  // Fonction unifiée pour obtenir la configuration du graphique
+  // Fonction pour obtenir la configuration du graphique
   const getGraphConfig = React.useCallback(
   (type) => {
+    // Recherche des informations du graphique sélectionné
     const graphInfo = GRAPH_TYPES.find((t) => t.key === type);
     if (!graphInfo) return { data: { datasets: [] }, options: {} };
 
+    //Extraction des propriétés clées
     const { label, unit: yUnit, color } = graphInfo;
     const dataStateKey = DATA_STATE_KEYS[type];
 
+    // Récupération des données correspondantes
     const allData = { 
       tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, co2Data 
     };
@@ -332,16 +309,17 @@ export default function DetailsPage() {
       };
     }
 
-    // --- TRI DES DONNÉES PAR DATE ---
+    // Tri des données par date croissante
     const sortedData = [...currentData].sort((a, b) => a.x - b.x);
 
-    let dynamicAllUnit = "month";
+    let dynamicAllUnit = "month"; // Par défaut, affichage par mois
 
+    // Calcul de l'écart total en jours 
     if (sortedData.length >= 2) {
       const start = sortedData[0].x.getTime();
       const end = sortedData[sortedData.length - 1].x.getTime();
       const spanDays = (end - start) / (1000 * 60 * 60 * 24);
-
+      // Choix de l'unité la plus adaptée selon l'étendue des données
       if(24*spanDays <= 1) dynamicAllUnit = "minute"
       else if (spanDays <= 1) dynamicAllUnit = "hour";
       else if (spanDays <= 60) dynamicAllUnit = "day";
@@ -373,11 +351,8 @@ export default function DetailsPage() {
       maxDate = undefined /*sortedData[sortedData.length - 1].x*/;
     }
 
-    // --- FILTRAGE DES DONNÉES VISIBLES ---
-    const visibleData = currentData.filter(
-      (p) => p.x >= minDate && p.x <= maxDate
-    );
-
+    
+    // On construit les données pour Chart.js : Permet de configurer le graphique
     const data = {
       datasets: [{
         label,
@@ -391,6 +366,7 @@ export default function DetailsPage() {
 
     const currentRangeLabel = TIME_RANGES.find(r => r.key === timeRange)?.label ?? timeRange;
 
+    // Configuration des options du graphique 
     const options = {
       responsive: true,
       maintainAspectRatio: false,
@@ -454,7 +430,7 @@ export default function DetailsPage() {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   }
   /* ---------------------------------------------------
-        RENDER
+        RENDER : Affichage de la page 
   ---------------------------------------------------- */
   return (
     <div>

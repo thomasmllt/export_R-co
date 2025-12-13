@@ -18,8 +18,8 @@ async function parseFrontMatterCsv(path) {
   return { meta, rows };
 }
 
-// TO DO : id for measurement does not exist ------------------------------------------------
 
+// ------------------------   GET   ------------------------
 
 
 // GET all mesures
@@ -57,6 +57,10 @@ router.get("/:id/:type", async (req, res) => {
     console.error(err);     res.status(500).json({ error: err.message });
   }
 });
+
+// ------------------------   POST PUT DELETE   ------------------------
+// Ces fonctions ont été crées mais n'ont pas été implémentées dans notre démonstration. Elles pourraient servir pour une future amélioration du service.
+
 
 // POST create new mesure
 router.post("/", async (req, res) => {
