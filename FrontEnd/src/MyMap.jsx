@@ -11,11 +11,13 @@ import locIcon from "./assets/loc.png";
 async function loadBeacons() {
   try {
     // Fetch list of beacon IDs
-    const res = await fetch("http://localhost:3000/beacon");
+    //const res = await fetch("http://localhost:3000/beacon");
+    const res = await fetch("https://r-co-api.onrender.com/beacon");
     const idList = await res.json(); // -> [{id:1},{id:2}...]
     // Fetch details for each beacon in parallel
     const detailPromises = idList.map(async (b) => {
-      const r = await fetch(`http://localhost:3000/beacon/${b.id}`);
+      //const r = await fetch(`http://localhost:3000/beacon/${b.id}`);
+      const r = await fetch(`https://r-co-api.onrender.com/beacon/${b.id}`);
       const rjson = await r.json();
       if (rjson.position) {
         rjson.position = rjson.position.split(',').map(Number);
