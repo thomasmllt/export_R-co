@@ -31,6 +31,7 @@ router.post("/", async (req, res) => {
   let gpsUpdates = 0;
   let typesCreated = 0;
   const typeCache = new Map(); // sensorType -> id_type
+  const gpsUpdatedThisPayload = new Set(); // évite plusieurs updates GPS pour la même balise dans un payload
 
   // Helpers
   // parsePosition: convertit une position stockée en base (string "lat,lon" ou tableau [lat, lon]) en objet {lat, lon}
@@ -132,8 +133,10 @@ router.post("/", async (req, res) => {
       // Mise à jour GPS avec tolérance de 50m:
       // - si la position a bougé de plus de 50 mètres, on crée une nouvelle balise pour représenter ce déplacement significatif
       // - sinon, on met simplement à jour la position de la balise existante
+      // Désormais on prend en compte le GPS fourni par n'importe quel sensor (pas seulement GPS_S) pour déclencher cette logique,
+      // mais on ne l'applique qu'une seule fois par balise et par payload.
       const effectiveBeaconId = beaconIdMap.get(beacon_id) || beacon_id;
-      if (sensorType === 'GPS_S' && gps && gps.lat != null && gps.lon != null) {
+      if (gps && gps.lat != null && gps.lon != null && !gpsUpdatedThisPayload.has(effectiveBeaconId)) {
         try {
           // Get current beacon position
           const curRes = await client.query("SELECT position, serial, name FROM beacons WHERE id=$1 LIMIT 1", [effectiveBeaconId]);
@@ -143,7 +146,7 @@ router.post("/", async (req, res) => {
             if (curPos) {
               const distKm = haversineKm(curPos.lat, curPos.lon, Number(gps.lat), Number(gps.lon));
               // 50m tolerance
-              if (distKm > 0.05) {
+              if (distKm > 0.01) {
                 shouldCreateNew = true;
               }
             }
@@ -164,11 +167,15 @@ router.post("/", async (req, res) => {
             beaconIdMap.set(beacon_id, newId);
             createdBeaconIds.add(newId);
             gpsUpdates++;
+            // Marquer l'ancienne et la nouvelle balise comme déjà traitées côté GPS pour ce payload
+            gpsUpdatedThisPayload.add(effectiveBeaconId);
+            gpsUpdatedThisPayload.add(newId);
           } else {
             // Tolérance respectée ou position actuelle inconnue: on met à jour la balise existante
             const position = `${gps.lat},${gps.lon}`;
             await client.query("UPDATE beacons SET position = $1 WHERE id=$2", [position, effectiveBeaconId]);
             gpsUpdates++;
+            gpsUpdatedThisPayload.add(effectiveBeaconId);
           }
         } catch (e) {
           errors.push({ sensorType, beacon_id, error: "Échec mise à jour GPS: " + e.message });
