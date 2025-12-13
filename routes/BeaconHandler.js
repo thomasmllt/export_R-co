@@ -3,6 +3,8 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 
+// ------------------------   GET   ------------------------
+
 // GET id of all beacons in db
 router.get("/", async (req, res) => {
   try {
@@ -114,6 +116,13 @@ router.put("/:id/name", async (req, res) => {
   }
 });
 
+
+
+
+// ------------------------   PUT   ------------------------
+// Fonctions non utilisées dans notre démonstration mais elles pourraient l'être pour des améliorations du site Web
+
+
 //PUT update description of a beacon through its id
 // Test OK
 router.put("/:id/description", async (req, res) => {
@@ -161,7 +170,8 @@ router.post("/", async (req, res) => {
 
 
 
-// GET beacon ID with GPS tolerance (~50 meters)
+// GET beacon ID with GPS tolerance (~50 meters) : 
+// Fonction pour palier les imprésitions de positionnement GPS
 router.get("/getId", async (req, res) => {
   const { serial, lat, lon } = req.query;
 
