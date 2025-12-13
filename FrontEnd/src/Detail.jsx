@@ -344,8 +344,8 @@ export default function DetailsPage() {
 
       if(24*spanDays <= 1) dynamicAllUnit = "minute"
       else if (spanDays <= 1) dynamicAllUnit = "hour";
-      else if (spanDays <= 30) dynamicAllUnit = "day";
-      else if (spanDays <= 500) dynamicAllUnit = "month";
+      else if (spanDays <= 60) dynamicAllUnit = "day";
+      else if (spanDays <= 548) dynamicAllUnit = "month";
       else dynamicAllUnit = "year";
     }
 
