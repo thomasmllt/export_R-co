@@ -95,12 +95,13 @@ router.post("/", async (req, res) => {
         const effectiveBeaconId = beaconIdMap.get(beacon_id) || beacon_id;
         const beaconCheck = await client.query("SELECT 1 FROM beacons WHERE id=$1", [effectiveBeaconId]);
         if (beaconCheck.rowCount === 0) {
-          // Chercher GPS le plus pertinent pour cette balise (priorité sensorType GPS_S)
+          // Chercher GPS le plus pertinent pour cette balise (n'importe quel sensor qui a des coords GPS valides)
           let lat = null, lon = null;
-          if (sensorType === 'GPS_S' && gps && gps.lat != null && gps.lon != null) {
+          if (gps && gps.lat != null && gps.lon != null) {
             lat = gps.lat; lon = gps.lon;
           } else {
-            const gpsSensor = sensors.find(s => s.beacon_id === beacon_id && s.sensorType === 'GPS_S' && s.gps && s.gps.lat != null && s.gps.lon != null);
+            // Fallback: chercher un autre sensor du même beacon avec GPS valides
+            const gpsSensor = sensors.find(s => s.beacon_id === beacon_id && s.gps && s.gps.lat != null && s.gps.lon != null);
             if (gpsSensor) { lat = gpsSensor.gps.lat; lon = gpsSensor.gps.lon; }
           }
           if (lat == null || lon == null) { lat = 0; lon = 0; }
@@ -133,7 +134,7 @@ router.post("/", async (req, res) => {
       // Mise à jour GPS avec tolérance de 50m:
       // - si la position a bougé de plus de 50 mètres, on crée une nouvelle balise pour représenter ce déplacement significatif
       // - sinon, on met simplement à jour la position de la balise existante
-      // Désormais on prend en compte le GPS fourni par n'importe quel sensor (pas seulement GPS_S) pour déclencher cette logique,
+      // On prend en compte le GPS fourni par n'importe quel sensor (pas seulement GPS_S) pour déclencher cette logique,
       // mais on ne l'applique qu'une seule fois par balise et par payload.
       const effectiveBeaconId = beaconIdMap.get(beacon_id) || beacon_id;
       if (gps && gps.lat != null && gps.lon != null && !gpsUpdatedThisPayload.has(effectiveBeaconId)) {
@@ -146,7 +147,7 @@ router.post("/", async (req, res) => {
             if (curPos) {
               const distKm = haversineKm(curPos.lat, curPos.lon, Number(gps.lat), Number(gps.lon));
               // 50m tolerance
-              if (distKm > 0.01) {
+              if (distKm > 0.05) {
                 shouldCreateNew = true;
               }
             }
@@ -154,8 +155,8 @@ router.post("/", async (req, res) => {
 
           if (shouldCreateNew) {
             // Crée une nouvelle balise pour ce déplacement significatif
-            const newSerial = `AUTO_80_${Date.now()}`;
-            const newName = `Auto 80`;
+            const newSerial = `AUTO_${beacon_id}_${Date.now()}`;
+            const newName = `Auto ${beacon_id}`;
             const position = `${gps.lat},${gps.lon}`;
             const ins = await client.query(
               `INSERT INTO beacons (serial, position, name, description)
