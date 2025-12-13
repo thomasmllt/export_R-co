@@ -12,8 +12,8 @@ import Princ from "./Princ.jsx"
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <Routes>
-      <Route path="/" element={<Princ />} />
-      <Route path="/carte" element={<MyMapInit/>} />
+      {/*<Route path="/" element={<Princ />} />*/}
+      <Route path="/" element={<MyMapInit/>} />
       <Route path="/details/:id" element={<Detail />} />
     </Routes>
   </BrowserRouter>

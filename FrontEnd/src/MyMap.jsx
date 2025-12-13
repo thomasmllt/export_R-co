@@ -376,7 +376,7 @@ function MyMap({ beacons }) {
   // Récupère les balises depuis la base de données
   useEffect(() => {
     // Définit le titre de la page
-    document.title = "Carte";
+    document.title = "Carte Balises";
 
     const fetchBeacons = async () => {
       try {

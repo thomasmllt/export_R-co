@@ -212,7 +212,7 @@ export default function DetailsPage() {
   }, [tempData, humidityData, pressData, pm1Data, pm25Data, pm10Data, co2Data]);
 
   /* ---------------------------------------------------
-        NAVIGATION TEMPORELLE
+                NAVIGATION TEMPORELLE
   ---------------------------------------------------- */
   React.useEffect(() => {
     const handleClickOutside = (event) => {
@@ -430,6 +430,10 @@ export default function DetailsPage() {
 
   const derivedOffset = computeOffsetFromRef(timeRange, referenceDate);
 
+  function formatLocalDate(date) {
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
   /* ---------------------------------------------------
         RENDER
   ---------------------------------------------------- */
@@ -439,7 +443,7 @@ export default function DetailsPage() {
       <div style={{ display: "flex", justifyContent: "flex-start" }}>
         <div style={{ width: "5%", padding: "20px" }}>
           <button
-            onClick={() => navigate("/carte")}
+            onClick={() => navigate("/")}
             className="absolute top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
           >
             Retour à la carte
@@ -451,7 +455,8 @@ export default function DetailsPage() {
         <div style={{ width: "50%" }}>
           <center>
             <h1>Données de la balise {beaconName}</h1>
-            <h2>Données de test : {beaconName} </h2>
+            <br></br>
+            <br></br>
           </center>
 
           {/* CONTRÔLES */}
@@ -555,9 +560,9 @@ export default function DetailsPage() {
               <input
                 id="datePicker"
                 type="date"
-                value={referenceDate.toISOString().split('T')[0]}
-                min={minDate ? minDate.toISOString().split('T')[0] : undefined}
-                max={maxDate ? maxDate.toISOString().split('T')[0] : undefined}
+                value={formatLocalDate(referenceDate)}
+                min={minDate ? formatLocalDate(minDate) : undefined}
+                max={maxDate ? formatLocalDate(maxDate) : undefined}
                 onChange={(e) => {
                   if (e.target.value) {
                     const selectedDate = new Date(e.target.value + 'T00:00:00');
