@@ -154,8 +154,8 @@ router.post("/", async (req, res) => {
 
           if (shouldCreateNew) {
             // Crée une nouvelle balise pour ce déplacement significatif
-            const newSerial = `AUTO_${beacon_id}_${Date.now()}`;
-            const newName = `Auto ${beacon_id}`;
+            const newSerial = `AUTO_80_${Date.now()}`;
+            const newName = `Auto 80`;
             const position = `${gps.lat},${gps.lon}`;
             const ins = await client.query(
               `INSERT INTO beacons (serial, position, name, description)
