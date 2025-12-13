@@ -74,6 +74,7 @@ export default function DetailsPage() {
   const [open, setOpen] = React.useState(false);
 
   const [beaconName, setBeaconName] = React.useState("Chargement...");
+  const [beaconDescription, setBeaconDescription] = React.useState("Chargement...");
   // États pour les données
   const [tempData, setTempData] = React.useState([]);
   const [humidityData, setHumidityData] = React.useState([]);
@@ -151,7 +152,25 @@ export default function DetailsPage() {
         setBeaconName("Erreur lors du chargement");
       }
     }
+
+    async function fetchBeaconDescription() {
+      try {
+        // Supposons que cet endpoint renvoie { description: "..." }
+        const response = await fetch(`https://r-co-api.onrender.com/beacon/${id}/description`); 
+        const data = await response.json();
+        setBeaconDescription(data.description || "Pas de description fournie.");
+      } catch (error) {
+        console.error("Erreur backend pour la description :", error);
+        setBeaconDescription("Erreur lors du chargement de la description.");
+      }
+    }
+
+
+
+
+
     fetchBeaconName();
+    fetchBeaconDescription();
   }, [id]);
 
   React.useEffect(() => {
@@ -455,6 +474,17 @@ export default function DetailsPage() {
         <div style={{ width: "50%" }}>
           <center>
             <h1>Données de la balise {beaconName}</h1>
+            <p 
+          style={{ 
+            maxWidth: '80%', 
+            margin: '10px auto 20px auto', 
+            fontSize: '1rem', 
+            color: '#4b5563', 
+            textAlign: 'center' 
+            }}
+            >
+              {beaconDescription}
+            </p>
             <br></br>
             <br></br>
           </center>
