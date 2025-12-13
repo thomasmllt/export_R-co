@@ -302,9 +302,13 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
   const avgTemp = feature.avgTemp;
   const avgPressure = feature.avgPressure;
   const avgHumidity = feature.avgHumidity;
-  //const lastUpdate = feature.last_update;
+  const lastUpdate = feature.last_update ? new Date(new Date(feature.last_update).getTime() - 60 * 60 * 1000) : null;
   //console.log("last update = ", lastUpdate);
 
+  const formatValue = (value, unit) =>
+  value !== null && value !== undefined
+    ? `${value} ${unit}`
+    : "Aucune mesure";
   return (
     <div
       ref={widgetRef}
@@ -336,10 +340,10 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
 
       {showDetails && (
         <div style={{ marginTop: "10px", color: "#333" }}>
-          <p><strong>Température moyenne:</strong> {avgTemp} °C</p>
-          <p><strong>Pression moyenne:</strong> {avgPressure} hPa</p>
-          <p><strong>Humidité moyenne:</strong> {avgHumidity} %</p>
-          {/*<p><strong>Dernière modification:</strong> {lastUpdate.toLocaleDateString("fr-FR")}</p>*/}
+          <p><strong>Température moyenne :</strong> {formatValue(avgTemp, "°C")}</p>
+          <p><strong>Pression moyenne :</strong> {formatValue(avgPressure, "hPa")}</p>
+          <p><strong>Humidité moyenne :</strong> {formatValue(avgHumidity, "%")}</p>
+          <p><strong>Dernière modification:</strong> {lastUpdate ? lastUpdate.toLocaleDateString("fr-FR", { timeZone: "UTC" }) : "Aucune mesure"}</p>
         </div>
       )}
 
