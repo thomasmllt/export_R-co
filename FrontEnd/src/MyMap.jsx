@@ -41,7 +41,7 @@ async function loadBeacons() {
     return beacons.filter(b => b !== null);
 
   } catch (err) {
-    console.error("Error fetching beacons:", err);
+    console.error("Erreur pour les balises:", err);
     return [];
   }
 }
