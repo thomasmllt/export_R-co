@@ -17,7 +17,8 @@ router.use((req, res, next) => {
 });
 
 // POST /postMeasurement
-// Attend un objet { sensors: [ { sensorType, beacon_id, gps:{lat,lon}, measurements:[{currentValue, historyAcquisitionTime}, ...] }, ... ] }
+// Attend un objet { sensors: [ { sensorType, gps:{lat,lon}, measurements:[{currentValue, historyAcquisitionTime}, ...] }, ... ] }
+// Pas de beacon_id : on crée/trouve une balise en fonction du GPS (±10m)
 router.post("/", async (req, res) => {
   const { sensors } = req.body || {};
   if (!Array.isArray(sensors) || sensors.length === 0) {
@@ -28,9 +29,10 @@ router.post("/", async (req, res) => {
   let inserted = 0;
   let skipped = 0;
   let errors = [];
-  let gpsUpdates = 0;
+  let beaconsCreated = 0;
   let typesCreated = 0;
   const typeCache = new Map(); // sensorType -> id_type
+  const createdBeaconIds = new Set();
 
   // Reverse-geocode lat/lon into a nearby city using Nominatim (OSM).
   const reverseGeocodeCity = (lat, lon) => new Promise((resolve) => {
@@ -65,88 +67,99 @@ router.post("/", async (req, res) => {
     const measurementCols = colRes.rows.filter(r => r.table_name === 'measurements').map(r => r.column_name);
     const typeCols = colRes.rows.filter(r => r.table_name === 'type_measurement').map(r => r.column_name);
     const hasIdType = measurementCols.includes('id_type');
+    const hasLatLon = measurementCols.includes('lat') && measurementCols.includes('lon');
     const hasTypeDescription = typeCols.includes('description');
     const hasTypeUnit = typeCols.includes('unit');
 
-    // Détection dynamique des noms de colonnes clés dans measurements
-    const beaconIdCol = ['id_beacon','beacon_id','balise_id'].find(c => measurementCols.includes(c)) || 'id_beacon';
-    const tsCol = ['timestamp','ts','time','created_at'].find(c => measurementCols.includes(c)) || 'timestamp';
-    const valueCol = ['value','valeur','val'].find(c => measurementCols.includes(c)) || 'value';
-
     console.log('[postMeasurement] measurement columns:', measurementCols);
-    console.log('[postMeasurement] mapped columns => beacon:', beaconIdCol, ' timestamp:', tsCol, ' value:', valueCol, ' hasIdType:', hasIdType);
+    console.log('[postMeasurement] hasLatLon:', hasLatLon, 'hasIdType:', hasIdType);
 
-    const createdBeaconIds = new Set();
-
-    // Map des beacon_id d'origine -> id réel créé (si auto-créé sans utiliser l'id fourni)
-    const beaconIdMap = new Map();
-
+    // Traiter chaque sensor
     for (const sensor of sensors) {
-      const { sensorType, beacon_id, gps, measurements } = sensor;
-      if (!sensorType || !beacon_id) {
-        errors.push({ sensorType, beacon_id, error: "sensorType ou beacon_id manquant" });
+      const { sensorType, gps, measurements } = sensor;
+      if (!sensorType) {
+        errors.push({ sensorType, error: "sensorType manquant" });
         continue;
       }
 
-      // Vérifier existence balise et création automatique si absente
-      try {
-        // Utiliser id effectif si précédemment mappé
-        const effectiveBeaconId = beaconIdMap.get(beacon_id) || beacon_id;
-        const beaconCheck = await client.query("SELECT 1 FROM beacons WHERE id=$1", [effectiveBeaconId]);
-        if (beaconCheck.rowCount === 0) {
-          // Chercher GPS le plus pertinent pour cette balise (n'importe quel sensor avec GPS)
-          let lat = null, lon = null;
-          if (gps && gps.lat != null && gps.lon != null) {
-            lat = gps.lat; lon = gps.lon;
-          } else {
-            const gpsSensor = sensors.find(s => s.beacon_id === beacon_id && s.gps && s.gps.lat != null && s.gps.lon != null);
-            if (gpsSensor) { lat = gpsSensor.gps.lat; lon = gpsSensor.gps.lon; }
-          }
-          if (lat == null || lon == null) { lat = 0; lon = 0; }
+      // GPS obligatoire pour trouver/créer une balise
+      if (!gps || gps.lat == null || gps.lon == null) {
+        errors.push({ sensorType, error: "GPS manquant ou incomplet" });
+        continue;
+      }
 
-          try {
-            const serial = `AUTO_${beacon_id}`;
-            const geoName = await reverseGeocodeCity(lat, lon);
-            const name = geoName || `Auto ${beacon_id}`;
-            const position = `${lat},${lon}`;
-            // Ne pas forcer l'id si la colonne est identity; récupérer celui généré
-            const ins = await client.query(
-              `INSERT INTO beacons (serial, position, name, description)
-               VALUES ($1, $2, $3, $4) RETURNING id`,
-              [serial, position, name, null]
-            );
-            const newId = ins.rows[0].id;
-            beaconIdMap.set(beacon_id, newId);
-            createdBeaconIds.add(newId);
-          } catch (e) {
-            errors.push({ sensorType, beacon_id, error: "Création beacon échouée: " + e.message });
-            // Si la création échoue, ne pas insérer les mesures
-            continue;
+      const lat = Number(gps.lat);
+      const lon = Number(gps.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        errors.push({ sensorType, error: "GPS invalide (non-numérique)" });
+        continue;
+      }
+
+      // Haversine distance en km
+      const haversineKm = (lat1, lon1, lat2, lon2) => {
+        const toRad = (d) => (d * Math.PI) / 180;
+        const R = 6371;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+      };
+
+      // Chercher une balise existante à ±10m (0.01 km)
+      let beaconId = null;
+      try {
+        // Récupérer tous les beacons et leurs GPS (moyenne des mesures)
+        const allBeacons = await client.query(
+          `SELECT DISTINCT b.id, 
+             AVG(m.lat) as avg_lat, AVG(m.lon) as avg_lon
+           FROM beacons b
+           LEFT JOIN measurements m ON m.id_beacon = b.id
+           WHERE m.lat IS NOT NULL AND m.lon IS NOT NULL
+           GROUP BY b.id`
+        );
+
+        // Trouver celui le plus proche (Haversine < 0.01 km)
+        let closestBeacon = null;
+        let minDist = 0.01;
+        for (const row of allBeacons.rows) {
+          const dist = haversineKm(lat, lon, row.avg_lat, row.avg_lon);
+          if (dist < minDist) {
+            minDist = dist;
+            closestBeacon = row.id;
           }
+        }
+
+        if (closestBeacon) {
+          beaconId = closestBeacon;
+          console.log(`[postMeasurement] Found nearby beacon ${beaconId} for GPS ${lat},${lon}`);
         }
       } catch (e) {
-        errors.push({ sensorType, beacon_id, error: "Erreur vérification/creation beacon: " + e.message });
-        continue;
+        console.log(`[postMeasurement] Error finding beacon: ${e.message}`);
       }
 
-      // GPS update
-      const effectiveBeaconId = beaconIdMap.get(beacon_id) || beacon_id;
-      if (gps && gps.lat != null && gps.lon != null) {
+      // Créer une nouvelle balise si aucune trouvée
+      if (!beaconId) {
         try {
-          const position = `${gps.lat},${gps.lon}`;
-          const geoName = await reverseGeocodeCity(gps.lat, gps.lon);
-          if (geoName) {
-            await client.query("UPDATE beacons SET position = $1, name = $2 WHERE id=$3", [position, geoName, effectiveBeaconId]);
-          } else {
-            await client.query("UPDATE beacons SET position = $1 WHERE id=$2", [position, effectiveBeaconId]);
-          }
-          gpsUpdates++;
+          const geoName = await reverseGeocodeCity(lat, lon);
+          const name = geoName || `Auto ${Date.now()}`;
+          const serial = `AUTO_${Date.now()}`;
+
+          const ins = await client.query(
+            `INSERT INTO beacons (serial, name, description) VALUES ($1, $2, $3) RETURNING id`,
+            [serial, name, null]
+          );
+          beaconId = ins.rows[0].id;
+          createdBeaconIds.add(beaconId);
+          beaconsCreated++;
+          console.log(`[postMeasurement] Created beacon ${beaconId} at ${name} (${lat},${lon})`);
         } catch (e) {
-          errors.push({ sensorType, beacon_id, error: "Échec mise à jour GPS: " + e.message });
+          errors.push({ sensorType, error: "Création beacon échouée: " + e.message });
+          continue;
         }
       }
 
-      // Type lookup / creation (si measurements a id_type)
+      // Résoudre/créer le type de mesure
       let idType = null;
       if (hasIdType) {
         try {
@@ -155,7 +168,6 @@ router.post("/", async (req, res) => {
           } else {
             const r = await client.query("SELECT id_type FROM type_measurement WHERE name=$1 LIMIT 1", [sensorType]);
             if (r.rowCount === 0) {
-              // Construction dynamique de l'INSERT selon colonnes dispo
               const cols = ['name'];
               const vals = [sensorType];
               const placeholders = ['$1'];
@@ -164,50 +176,72 @@ router.post("/", async (req, res) => {
               if (hasTypeDescription) { cols.push('description'); placeholders.push(`$${paramIndex++}`); vals.push(null); }
               const insertSql = `INSERT INTO type_measurement (${cols.join(',')}) VALUES (${placeholders.join(',')}) RETURNING id_type`;
               const crt = await client.query(insertSql, vals);
-              idType = crt.rows[0].id_type; typesCreated++;
+              idType = crt.rows[0].id_type;
+              typesCreated++;
             } else {
               idType = r.rows[0].id_type;
             }
             typeCache.set(sensorType, idType);
           }
         } catch (e) {
-          errors.push({ sensorType, beacon_id, error: "Erreur lookup/creation type: " + e.message });
+          errors.push({ sensorType, error: "Erreur lookup/creation type: " + e.message });
         }
       }
 
-      if (!Array.isArray(measurements)) continue;
+      // Insérer les mesures
+      if (!Array.isArray(measurements) || measurements.length === 0) {
+        continue;
+      }
+
       for (const m of measurements) {
         const { currentValue, historyAcquisitionTime } = m;
-        if (currentValue == null || !historyAcquisitionTime) { skipped++; continue; }
+        if (currentValue == null || !historyAcquisitionTime) {
+          skipped++;
+          continue;
+        }
+
         try {
-          // Doublon
+          // Vérifier doublon
           let existsQuery, existsParams;
           if (hasIdType) {
-            if (idType == null) { skipped++; continue; }
-            existsQuery = `SELECT 1 FROM measurements WHERE ${beaconIdCol}=$1 AND id_type=$2 AND ${tsCol}=$3 LIMIT 1`;
-            existsParams = [effectiveBeaconId, idType, historyAcquisitionTime];
+            existsQuery = `SELECT 1 FROM measurements WHERE id_beacon=$1 AND id_type=$2 AND timestamp=$3 LIMIT 1`;
+            existsParams = [beaconId, idType, historyAcquisitionTime];
           } else {
-            existsQuery = `SELECT 1 FROM measurements WHERE ${beaconIdCol}=$1 AND ${tsCol}=$2 LIMIT 1`;
-            existsParams = [effectiveBeaconId, historyAcquisitionTime];
+            existsQuery = `SELECT 1 FROM measurements WHERE id_beacon=$1 AND timestamp=$2 LIMIT 1`;
+            existsParams = [beaconId, historyAcquisitionTime];
           }
-          const exists = await client.query(existsQuery, existsParams);
-          if (exists.rowCount > 0) { skipped++; continue; }
 
-          // Insert
-          if (hasIdType) {
+          const exists = await client.query(existsQuery, existsParams);
+          if (exists.rowCount > 0) {
+            skipped++;
+            continue;
+          }
+
+          // Insérer la mesure avec lat/lon
+          if (hasIdType && hasLatLon) {
             await client.query(
-              `INSERT INTO measurements (${valueCol}, ${tsCol}, ${beaconIdCol}, id_type) VALUES ($1,$2,$3,$4)`,
-              [currentValue, historyAcquisitionTime, effectiveBeaconId, idType]
+              `INSERT INTO measurements (id_beacon, id_type, timestamp, value, lat, lon) VALUES ($1,$2,$3,$4,$5,$6)`,
+              [beaconId, idType, historyAcquisitionTime, currentValue, lat, lon]
+            );
+          } else if (hasIdType) {
+            await client.query(
+              `INSERT INTO measurements (id_beacon, id_type, timestamp, value) VALUES ($1,$2,$3,$4)`,
+              [beaconId, idType, historyAcquisitionTime, currentValue]
+            );
+          } else if (hasLatLon) {
+            await client.query(
+              `INSERT INTO measurements (id_beacon, timestamp, value, lat, lon) VALUES ($1,$2,$3,$4,$5)`,
+              [beaconId, historyAcquisitionTime, currentValue, lat, lon]
             );
           } else {
             await client.query(
-              `INSERT INTO measurements (${valueCol}, ${tsCol}, ${beaconIdCol}) VALUES ($1,$2,$3)`,
-              [currentValue, historyAcquisitionTime, effectiveBeaconId]
+              `INSERT INTO measurements (id_beacon, timestamp, value) VALUES ($1,$2,$3)`,
+              [beaconId, historyAcquisitionTime, currentValue]
             );
           }
           inserted++;
         } catch (e) {
-          errors.push({ sensorType, beacon_id, error: "Insertion échouée: " + e.message });
+          errors.push({ sensorType, error: "Insertion échouée: " + e.message });
         }
       }
     }
@@ -217,12 +251,9 @@ router.post("/", async (req, res) => {
       sensorsProcessed: sensors.length,
       measurementsInserted: inserted,
       measurementsSkipped: skipped,
-      gpsUpdates,
-      typesCreated,
-      beaconsCreated: createdBeaconIds.size,
+      beaconsCreated,
       createdBeaconIds: Array.from(createdBeaconIds),
-      beaconIdMap: Array.from(beaconIdMap.entries()).map(([original, actual]) => ({ original, actual })),
-      columnMapping: { beaconIdCol, tsCol, valueCol, hasIdType },
+      typesCreated,
       errors
     });
   } catch (e) {
