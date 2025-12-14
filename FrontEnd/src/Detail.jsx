@@ -1,4 +1,5 @@
 import React from "react";
+import Loading from "./Loading.jsx";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -612,7 +613,7 @@ export default function DetailsPage() {
             {currentData && currentData.datasets.length > 0 ? (
               <Line data={currentData} options={currentOptions} width={800} height={400} />
             ) : (
-              <p>Chargement des données ou aucune donnée disponible pour cette période/type.</p>
+              <Loading label="Chargement des données..." />
             )}
           </center>
         </div>
