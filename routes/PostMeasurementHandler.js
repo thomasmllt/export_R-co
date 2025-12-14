@@ -143,7 +143,7 @@ router.post("/", async (req, res) => {
       if (!beaconId) {
         try {
           const geo = await reverseGeocodeLocation(lat, lon);
-          const name = geo.city || `Beacon ${Date.now()}`;
+          const name = `Balise ${geo.city}` || `Balise ${Date.now()}`;
           const description = geo.street || null;
 
           const ins = await client.query(

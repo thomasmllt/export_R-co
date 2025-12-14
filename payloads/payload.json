@@ -1,0 +1,982 @@
+{
+  "sensors": [
+    {
+      "sensorType": "TEMP_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": 49.28214,
+        "lon": -1.520813
+      },
+      "measurements": [
+        {
+          "currentValue": 26.2,
+          "historyAcquisitionTime": "2025-12-14T11:31:03.327901"
+        },
+        {
+          "currentValue": 25.6,
+          "historyAcquisitionTime": "2025-12-14T11:31:28.137901"
+        },
+        {
+          "currentValue": 25.2,
+          "historyAcquisitionTime": "2025-12-14T11:31:52.947901"
+        },
+        {
+          "currentValue": 25.1,
+          "historyAcquisitionTime": "2025-12-14T11:32:17.757901"
+        },
+        {
+          "currentValue": 25,
+          "historyAcquisitionTime": "2025-12-14T11:32:42.567901"
+        },
+        {
+          "currentValue": 25,
+          "historyAcquisitionTime": "2025-12-14T11:33:07.377901"
+        },
+        {
+          "currentValue": 24.9,
+          "historyAcquisitionTime": "2025-12-14T11:33:32.187901"
+        },
+        {
+          "currentValue": 24.9,
+          "historyAcquisitionTime": "2025-12-14T11:33:56.997901"
+        },
+        {
+          "currentValue": 24.9,
+          "historyAcquisitionTime": "2025-12-14T11:34:21.807901"
+        },
+        {
+          "currentValue": 24.9,
+          "historyAcquisitionTime": "2025-12-14T11:34:46.617901"
+        },
+        {
+          "currentValue": 24.9,
+          "historyAcquisitionTime": "2025-12-14T11:35:11.427901"
+        },
+        {
+          "currentValue": 24.9,
+          "historyAcquisitionTime": "2025-12-14T11:35:36.237901"
+        },
+        {
+          "currentValue": 24.9,
+          "historyAcquisitionTime": "2025-12-14T11:36:01.047901"
+        },
+        {
+          "currentValue": 25,
+          "historyAcquisitionTime": "2025-12-14T11:36:25.857901"
+        },
+        {
+          "currentValue": 25.1,
+          "historyAcquisitionTime": "2025-12-14T11:36:50.667901"
+        },
+        {
+          "currentValue": 25.2,
+          "historyAcquisitionTime": "2025-12-14T11:37:15.477901"
+        },
+        {
+          "currentValue": 25.3,
+          "historyAcquisitionTime": "2025-12-14T11:37:40.287901"
+        },
+        {
+          "currentValue": 25.4,
+          "historyAcquisitionTime": "2025-12-14T11:38:05.097901"
+        },
+        {
+          "currentValue": 25.7,
+          "historyAcquisitionTime": "2025-12-14T11:38:29.907901"
+        },
+        {
+          "currentValue": 25.8,
+          "historyAcquisitionTime": "2025-12-14T11:38:54.717901"
+        },
+        {
+          "currentValue": 25.7,
+          "historyAcquisitionTime": "2025-12-14T11:39:19.527901"
+        },
+        {
+          "currentValue": 25.4,
+          "historyAcquisitionTime": "2025-12-14T11:39:44.337901"
+        },
+        {
+          "currentValue": 26,
+          "historyAcquisitionTime": "2025-12-14T11:40:09.147901"
+        },
+        {
+          "currentValue": 25.7,
+          "historyAcquisitionTime": "2025-12-14T11:40:33.957901"
+        },
+        {
+          "currentValue": 25.5,
+          "historyAcquisitionTime": "2025-12-14T11:40:58.767901"
+        },
+        {
+          "currentValue": 25.3,
+          "historyAcquisitionTime": "2025-12-14T11:41:23.577901"
+        },
+        {
+          "currentValue": 25.1,
+          "historyAcquisitionTime": "2025-12-14T11:41:48.387901"
+        },
+        {
+          "currentValue": 24.9,
+          "historyAcquisitionTime": "2025-12-14T11:42:13.197901"
+        },
+        {
+          "currentValue": 24.9,
+          "historyAcquisitionTime": "2025-12-14T11:42:38.007901"
+        },
+        {
+          "currentValue": 24.9,
+          "historyAcquisitionTime": "2025-12-14T11:43:02.817901"
+        },
+        {
+          "currentValue": 25.5,
+          "historyAcquisitionTime": "2025-12-14T11:43:27.627901"
+        },
+        {
+          "currentValue": 24.9,
+          "historyAcquisitionTime": "2025-12-14T11:43:52.437901"
+        },
+        {
+          "currentValue": 24.6,
+          "historyAcquisitionTime": "2025-12-14T11:44:17.247901"
+        },
+        {
+          "currentValue": 24.6,
+          "historyAcquisitionTime": "2025-12-14T11:44:42.057901"
+        },
+        {
+          "currentValue": 24.8,
+          "historyAcquisitionTime": "2025-12-14T11:45:06.867901"
+        },
+        {
+          "currentValue": 25.2,
+          "historyAcquisitionTime": "2025-12-14T11:45:31.677901"
+        },
+        {
+          "currentValue": 25.5,
+          "historyAcquisitionTime": "2025-12-14T11:45:56.487901"
+        },
+        {
+          "currentValue": 25.3,
+          "historyAcquisitionTime": "2025-12-14T11:46:21.297901"
+        },
+        {
+          "currentValue": 25.1,
+          "historyAcquisitionTime": "2025-12-14T11:46:46.107901"
+        },
+        {
+          "currentValue": 24.9,
+          "historyAcquisitionTime": "2025-12-14T11:47:10.917901"
+        },
+        {
+          "currentValue": 24.7,
+          "historyAcquisitionTime": "2025-12-14T11:47:35.727901"
+        },
+        {
+          "currentValue": 24.4,
+          "historyAcquisitionTime": "2025-12-14T11:48:00.537901"
+        },
+        {
+          "currentValue": 24.2,
+          "historyAcquisitionTime": "2025-12-14T11:48:25.347901"
+        },
+        {
+          "currentValue": 24,
+          "historyAcquisitionTime": "2025-12-14T11:48:50.157901"
+        },
+        {
+          "currentValue": 23.9,
+          "historyAcquisitionTime": "2025-12-14T11:49:14.967901"
+        },
+        {
+          "currentValue": 23.9,
+          "historyAcquisitionTime": "2025-12-14T11:49:39.777901"
+        },
+        {
+          "currentValue": 26.3,
+          "historyAcquisitionTime": "2025-12-14T11:50:04.587901"
+        },
+        {
+          "currentValue": 26.3,
+          "historyAcquisitionTime": "2025-12-14T11:50:29.397901"
+        },
+        {
+          "currentValue": 26.4,
+          "historyAcquisitionTime": "2025-12-14T11:50:54.207901"
+        },
+        {
+          "currentValue": 26.4,
+          "historyAcquisitionTime": "2025-12-14T11:51:19.017901"
+        },
+        {
+          "currentValue": 26.4,
+          "historyAcquisitionTime": "2025-12-14T11:51:43.827901"
+        },
+        {
+          "currentValue": 26.5,
+          "historyAcquisitionTime": "2025-12-14T11:52:08.637901"
+        },
+        {
+          "currentValue": 26.5,
+          "historyAcquisitionTime": "2025-12-14T11:52:33.447901"
+        },
+        {
+          "currentValue": 26.5,
+          "historyAcquisitionTime": "2025-12-14T11:52:58.257901"
+        },
+        {
+          "currentValue": 26.5,
+          "historyAcquisitionTime": "2025-12-14T11:53:23.067901"
+        },
+        {
+          "currentValue": 26.6,
+          "historyAcquisitionTime": "2025-12-14T11:53:47.877901"
+        },
+        {
+          "currentValue": 26.6,
+          "historyAcquisitionTime": "2025-12-14T11:54:12.687901"
+        },
+        {
+          "currentValue": 26.6,
+          "historyAcquisitionTime": "2025-12-14T11:54:37.497901"
+        },
+        {
+          "currentValue": 26.6,
+          "historyAcquisitionTime": "2025-12-14T11:55:02.307901"
+        },
+        {
+          "currentValue": 26.7,
+          "historyAcquisitionTime": "2025-12-14T11:55:27.117901"
+        }
+      ]
+    },
+    {
+      "sensorType": "HUMIDITY_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": 49.28214,
+        "lon": -1.520813
+      },
+      "measurements": [
+        {
+          "currentValue": 54.1,
+          "historyAcquisitionTime": "2025-12-14T11:31:10.160939"
+        },
+        {
+          "currentValue": 55,
+          "historyAcquisitionTime": "2025-12-14T11:31:34.970939"
+        },
+        {
+          "currentValue": 55.8,
+          "historyAcquisitionTime": "2025-12-14T11:31:59.780939"
+        },
+        {
+          "currentValue": 55.9,
+          "historyAcquisitionTime": "2025-12-14T11:32:24.590939"
+        },
+        {
+          "currentValue": 56,
+          "historyAcquisitionTime": "2025-12-14T11:32:49.400939"
+        },
+        {
+          "currentValue": 56,
+          "historyAcquisitionTime": "2025-12-14T11:33:14.210939"
+        },
+        {
+          "currentValue": 56,
+          "historyAcquisitionTime": "2025-12-14T11:33:39.020939"
+        },
+        {
+          "currentValue": 56.2,
+          "historyAcquisitionTime": "2025-12-14T11:34:03.830939"
+        },
+        {
+          "currentValue": 56,
+          "historyAcquisitionTime": "2025-12-14T11:34:28.640939"
+        },
+        {
+          "currentValue": 56,
+          "historyAcquisitionTime": "2025-12-14T11:34:53.450939"
+        },
+        {
+          "currentValue": 55.8,
+          "historyAcquisitionTime": "2025-12-14T11:35:18.260939"
+        },
+        {
+          "currentValue": 55.9,
+          "historyAcquisitionTime": "2025-12-14T11:35:43.070939"
+        },
+        {
+          "currentValue": 55.7,
+          "historyAcquisitionTime": "2025-12-14T11:36:07.880939"
+        },
+        {
+          "currentValue": 55.5,
+          "historyAcquisitionTime": "2025-12-14T11:36:32.690939"
+        },
+        {
+          "currentValue": 55.3,
+          "historyAcquisitionTime": "2025-12-14T11:36:57.500939"
+        },
+        {
+          "currentValue": 55.1,
+          "historyAcquisitionTime": "2025-12-14T11:37:22.310939"
+        },
+        {
+          "currentValue": 54.9,
+          "historyAcquisitionTime": "2025-12-14T11:37:47.120939"
+        },
+        {
+          "currentValue": 54.6,
+          "historyAcquisitionTime": "2025-12-14T11:38:11.930939"
+        },
+        {
+          "currentValue": 54.1,
+          "historyAcquisitionTime": "2025-12-14T11:38:36.740939"
+        },
+        {
+          "currentValue": 53.7,
+          "historyAcquisitionTime": "2025-12-14T11:39:01.550939"
+        },
+        {
+          "currentValue": 54,
+          "historyAcquisitionTime": "2025-12-14T11:39:26.360939"
+        },
+        {
+          "currentValue": 54.2,
+          "historyAcquisitionTime": "2025-12-14T11:39:51.170939"
+        },
+        {
+          "currentValue": 53.2,
+          "historyAcquisitionTime": "2025-12-14T11:40:15.980939"
+        },
+        {
+          "currentValue": 53.9,
+          "historyAcquisitionTime": "2025-12-14T11:40:40.790939"
+        },
+        {
+          "currentValue": 54.2,
+          "historyAcquisitionTime": "2025-12-14T11:41:05.600939"
+        },
+        {
+          "currentValue": 54.6,
+          "historyAcquisitionTime": "2025-12-14T11:41:30.410939"
+        },
+        {
+          "currentValue": 55.1,
+          "historyAcquisitionTime": "2025-12-14T11:41:55.220939"
+        },
+        {
+          "currentValue": 55,
+          "historyAcquisitionTime": "2025-12-14T11:42:20.030939"
+        },
+        {
+          "currentValue": 55.1,
+          "historyAcquisitionTime": "2025-12-14T11:42:44.840939"
+        },
+        {
+          "currentValue": 55,
+          "historyAcquisitionTime": "2025-12-14T11:43:09.650939"
+        },
+        {
+          "currentValue": 54,
+          "historyAcquisitionTime": "2025-12-14T11:43:34.460939"
+        },
+        {
+          "currentValue": 55.2,
+          "historyAcquisitionTime": "2025-12-14T11:43:59.270939"
+        },
+        {
+          "currentValue": 55.6,
+          "historyAcquisitionTime": "2025-12-14T11:44:24.080939"
+        },
+        {
+          "currentValue": 55.3,
+          "historyAcquisitionTime": "2025-12-14T11:44:48.890939"
+        },
+        {
+          "currentValue": 55,
+          "historyAcquisitionTime": "2025-12-14T11:45:13.700939"
+        },
+        {
+          "currentValue": 53.9,
+          "historyAcquisitionTime": "2025-12-14T11:45:38.510939"
+        },
+        {
+          "currentValue": 53.5,
+          "historyAcquisitionTime": "2025-12-14T11:46:03.320939"
+        },
+        {
+          "currentValue": 53.9,
+          "historyAcquisitionTime": "2025-12-14T11:46:28.130939"
+        },
+        {
+          "currentValue": 54.3,
+          "historyAcquisitionTime": "2025-12-14T11:46:52.940939"
+        },
+        {
+          "currentValue": 54.7,
+          "historyAcquisitionTime": "2025-12-14T11:47:17.750939"
+        },
+        {
+          "currentValue": 55,
+          "historyAcquisitionTime": "2025-12-14T11:47:42.560939"
+        },
+        {
+          "currentValue": 55.6,
+          "historyAcquisitionTime": "2025-12-14T11:48:07.370939"
+        },
+        {
+          "currentValue": 56,
+          "historyAcquisitionTime": "2025-12-14T11:48:32.180939"
+        },
+        {
+          "currentValue": 56.3,
+          "historyAcquisitionTime": "2025-12-14T11:48:56.990939"
+        },
+        {
+          "currentValue": 56.4,
+          "historyAcquisitionTime": "2025-12-14T11:49:21.800939"
+        },
+        {
+          "currentValue": 56.3,
+          "historyAcquisitionTime": "2025-12-14T11:49:46.610939"
+        },
+        {
+          "currentValue": 53.7,
+          "historyAcquisitionTime": "2025-12-14T11:50:11.420939"
+        },
+        {
+          "currentValue": 53.6,
+          "historyAcquisitionTime": "2025-12-14T11:50:36.230939"
+        },
+        {
+          "currentValue": 53.5,
+          "historyAcquisitionTime": "2025-12-14T11:51:01.040939"
+        },
+        {
+          "currentValue": 53.5,
+          "historyAcquisitionTime": "2025-12-14T11:51:25.850939"
+        },
+        {
+          "currentValue": 53.5,
+          "historyAcquisitionTime": "2025-12-14T11:51:50.660939"
+        },
+        {
+          "currentValue": 53.4,
+          "historyAcquisitionTime": "2025-12-14T11:52:15.470939"
+        },
+        {
+          "currentValue": 53.3,
+          "historyAcquisitionTime": "2025-12-14T11:52:40.280939"
+        },
+        {
+          "currentValue": 53.2,
+          "historyAcquisitionTime": "2025-12-14T11:53:05.090939"
+        },
+        {
+          "currentValue": 53.2,
+          "historyAcquisitionTime": "2025-12-14T11:53:29.900939"
+        },
+        {
+          "currentValue": 53.1,
+          "historyAcquisitionTime": "2025-12-14T11:53:54.710939"
+        },
+        {
+          "currentValue": 53,
+          "historyAcquisitionTime": "2025-12-14T11:54:19.520939"
+        },
+        {
+          "currentValue": 53,
+          "historyAcquisitionTime": "2025-12-14T11:54:44.330939"
+        },
+        {
+          "currentValue": 52.9,
+          "historyAcquisitionTime": "2025-12-14T11:55:09.140939"
+        }
+      ]
+    },
+    {
+      "sensorType": "PRESSURE_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": 49.28214,
+        "lon": -1.520813
+      },
+      "measurements": [
+        {
+          "currentValue": 1019,
+          "historyAcquisitionTime": "2025-12-14T11:49:41.136694"
+        },
+        {
+          "currentValue": 1018,
+          "historyAcquisitionTime": "2025-12-14T11:49:42.136694"
+        },
+        {
+          "currentValue": 1021,
+          "historyAcquisitionTime": "2025-12-14T11:49:43.136694"
+        },
+        {
+          "currentValue": 1021,
+          "historyAcquisitionTime": "2025-12-14T11:49:44.136694"
+        },
+        {
+          "currentValue": 1018,
+          "historyAcquisitionTime": "2025-12-14T11:49:45.136694"
+        },
+        {
+          "currentValue": 1018,
+          "historyAcquisitionTime": "2025-12-14T11:49:46.136694"
+        },
+        {
+          "currentValue": 1017,
+          "historyAcquisitionTime": "2025-12-14T11:49:47.136694"
+        },
+        {
+          "currentValue": 1018,
+          "historyAcquisitionTime": "2025-12-14T11:49:48.136694"
+        },
+        {
+          "currentValue": 1019,
+          "historyAcquisitionTime": "2025-12-14T11:49:49.136694"
+        },
+        {
+          "currentValue": 1022,
+          "historyAcquisitionTime": "2025-12-14T11:49:50.136694"
+        },
+        {
+          "currentValue": 1018,
+          "historyAcquisitionTime": "2025-12-14T11:49:51.136694"
+        },
+        {
+          "currentValue": 1019,
+          "historyAcquisitionTime": "2025-12-14T11:49:52.136694"
+        },
+        {
+          "currentValue": 1018,
+          "historyAcquisitionTime": "2025-12-14T11:49:53.136694"
+        },
+        {
+          "currentValue": 1018,
+          "historyAcquisitionTime": "2025-12-14T11:49:54.136694"
+        },
+        {
+          "currentValue": 1018,
+          "historyAcquisitionTime": "2025-12-14T11:49:55.136694"
+        }
+      ]
+    },
+    {
+      "sensorType": "DUST_PM1_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": 49.28214,
+        "lon": -1.520813
+      },
+      "measurements": [
+        {
+          "currentValue": 80,
+          "historyAcquisitionTime": "2025-12-14T11:49:41.138853"
+        },
+        {
+          "currentValue": 70,
+          "historyAcquisitionTime": "2025-12-14T11:49:42.138853"
+        },
+        {
+          "currentValue": 60,
+          "historyAcquisitionTime": "2025-12-14T11:49:43.138853"
+        },
+        {
+          "currentValue": 60,
+          "historyAcquisitionTime": "2025-12-14T11:49:44.138853"
+        },
+        {
+          "currentValue": 60,
+          "historyAcquisitionTime": "2025-12-14T11:49:45.138853"
+        },
+        {
+          "currentValue": 70,
+          "historyAcquisitionTime": "2025-12-14T11:49:46.138853"
+        },
+        {
+          "currentValue": 80,
+          "historyAcquisitionTime": "2025-12-14T11:49:47.138853"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:48.138853"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:49.138853"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:50.138853"
+        },
+        {
+          "currentValue": 80,
+          "historyAcquisitionTime": "2025-12-14T11:49:51.138853"
+        },
+        {
+          "currentValue": 70,
+          "historyAcquisitionTime": "2025-12-14T11:49:52.138853"
+        },
+        {
+          "currentValue": 70,
+          "historyAcquisitionTime": "2025-12-14T11:49:53.138853"
+        },
+        {
+          "currentValue": 70,
+          "historyAcquisitionTime": "2025-12-14T11:49:54.138853"
+        },
+        {
+          "currentValue": 70,
+          "historyAcquisitionTime": "2025-12-14T11:49:55.138853"
+        }
+      ]
+    },
+    {
+      "sensorType": "DUST_PM2_5_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": 49.28214,
+        "lon": -1.520813
+      },
+      "measurements": [
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:41.139248"
+        },
+        {
+          "currentValue": 80,
+          "historyAcquisitionTime": "2025-12-14T11:49:42.139248"
+        },
+        {
+          "currentValue": 80,
+          "historyAcquisitionTime": "2025-12-14T11:49:43.139248"
+        },
+        {
+          "currentValue": 80,
+          "historyAcquisitionTime": "2025-12-14T11:49:44.139248"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:45.139248"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:46.139248"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:47.139248"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:48.139248"
+        },
+        {
+          "currentValue": 100,
+          "historyAcquisitionTime": "2025-12-14T11:49:49.139248"
+        },
+        {
+          "currentValue": 110,
+          "historyAcquisitionTime": "2025-12-14T11:49:50.139248"
+        },
+        {
+          "currentValue": 100,
+          "historyAcquisitionTime": "2025-12-14T11:49:51.139248"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:52.139248"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:53.139248"
+        },
+        {
+          "currentValue": 80,
+          "historyAcquisitionTime": "2025-12-14T11:49:54.139248"
+        },
+        {
+          "currentValue": 100,
+          "historyAcquisitionTime": "2025-12-14T11:49:55.139248"
+        }
+      ]
+    },
+    {
+      "sensorType": "DUST_PM10_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": 49.28214,
+        "lon": -1.520813
+      },
+      "measurements": [
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:41.139281"
+        },
+        {
+          "currentValue": 80,
+          "historyAcquisitionTime": "2025-12-14T11:49:42.139281"
+        },
+        {
+          "currentValue": 80,
+          "historyAcquisitionTime": "2025-12-14T11:49:43.139281"
+        },
+        {
+          "currentValue": 80,
+          "historyAcquisitionTime": "2025-12-14T11:49:44.139281"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:45.139281"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:46.139281"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:47.139281"
+        },
+        {
+          "currentValue": 90,
+          "historyAcquisitionTime": "2025-12-14T11:49:48.139281"
+        },
+        {
+          "currentValue": 100,
+          "historyAcquisitionTime": "2025-12-14T11:49:49.139281"
+        },
+        {
+          "currentValue": 130,
+          "historyAcquisitionTime": "2025-12-14T11:49:50.139281"
+        },
+        {
+          "currentValue": 120,
+          "historyAcquisitionTime": "2025-12-14T11:49:51.139281"
+        },
+        {
+          "currentValue": 110,
+          "historyAcquisitionTime": "2025-12-14T11:49:52.139281"
+        },
+        {
+          "currentValue": 120,
+          "historyAcquisitionTime": "2025-12-14T11:49:53.139281"
+        },
+        {
+          "currentValue": 100,
+          "historyAcquisitionTime": "2025-12-14T11:49:54.139281"
+        },
+        {
+          "currentValue": 110,
+          "historyAcquisitionTime": "2025-12-14T11:49:55.139281"
+        }
+      ]
+    },
+    {
+      "sensorType": "CO2_S",
+      "beacon_id": 1,
+      "gps": {
+        "lat": 49.28214,
+        "lon": -1.520813
+      },
+      "measurements": [
+        {
+          "currentValue": 1338,
+          "historyAcquisitionTime": "2025-12-14T11:31:49.144511"
+        },
+        {
+          "currentValue": 1331,
+          "historyAcquisitionTime": "2025-12-14T11:32:13.954511"
+        },
+        {
+          "currentValue": 1329,
+          "historyAcquisitionTime": "2025-12-14T11:32:38.764511"
+        },
+        {
+          "currentValue": 1327,
+          "historyAcquisitionTime": "2025-12-14T11:33:03.574511"
+        },
+        {
+          "currentValue": 1328,
+          "historyAcquisitionTime": "2025-12-14T11:33:28.384511"
+        },
+        {
+          "currentValue": 1319,
+          "historyAcquisitionTime": "2025-12-14T11:33:53.194511"
+        },
+        {
+          "currentValue": 1303,
+          "historyAcquisitionTime": "2025-12-14T11:34:18.004511"
+        },
+        {
+          "currentValue": 1326,
+          "historyAcquisitionTime": "2025-12-14T11:34:42.814511"
+        },
+        {
+          "currentValue": 1307,
+          "historyAcquisitionTime": "2025-12-14T11:35:07.624511"
+        },
+        {
+          "currentValue": 1296,
+          "historyAcquisitionTime": "2025-12-14T11:35:32.434511"
+        },
+        {
+          "currentValue": 1290,
+          "historyAcquisitionTime": "2025-12-14T11:35:57.244511"
+        },
+        {
+          "currentValue": 1286,
+          "historyAcquisitionTime": "2025-12-14T11:36:22.054511"
+        },
+        {
+          "currentValue": 1290,
+          "historyAcquisitionTime": "2025-12-14T11:36:46.864511"
+        },
+        {
+          "currentValue": 1283,
+          "historyAcquisitionTime": "2025-12-14T11:37:11.674511"
+        },
+        {
+          "currentValue": 1274,
+          "historyAcquisitionTime": "2025-12-14T11:37:36.484511"
+        },
+        {
+          "currentValue": 1268,
+          "historyAcquisitionTime": "2025-12-14T11:38:01.294511"
+        },
+        {
+          "currentValue": 1266,
+          "historyAcquisitionTime": "2025-12-14T11:38:26.104511"
+        },
+        {
+          "currentValue": 1276,
+          "historyAcquisitionTime": "2025-12-14T11:38:50.914511"
+        },
+        {
+          "currentValue": 1273,
+          "historyAcquisitionTime": "2025-12-14T11:39:15.724511"
+        },
+        {
+          "currentValue": 1261,
+          "historyAcquisitionTime": "2025-12-14T11:39:40.534511"
+        },
+        {
+          "currentValue": 1245,
+          "historyAcquisitionTime": "2025-12-14T11:40:05.344511"
+        },
+        {
+          "currentValue": 1239,
+          "historyAcquisitionTime": "2025-12-14T11:40:30.154511"
+        },
+        {
+          "currentValue": 1228,
+          "historyAcquisitionTime": "2025-12-14T11:40:54.964511"
+        },
+        {
+          "currentValue": 1221,
+          "historyAcquisitionTime": "2025-12-14T11:41:19.774511"
+        },
+        {
+          "currentValue": 1215,
+          "historyAcquisitionTime": "2025-12-14T11:41:44.584511"
+        },
+        {
+          "currentValue": 1208,
+          "historyAcquisitionTime": "2025-12-14T11:42:09.394511"
+        },
+        {
+          "currentValue": 1200,
+          "historyAcquisitionTime": "2025-12-14T11:42:34.204511"
+        },
+        {
+          "currentValue": 1191,
+          "historyAcquisitionTime": "2025-12-14T11:42:59.014511"
+        },
+        {
+          "currentValue": 1183,
+          "historyAcquisitionTime": "2025-12-14T11:43:23.824511"
+        },
+        {
+          "currentValue": 1178,
+          "historyAcquisitionTime": "2025-12-14T11:43:48.634511"
+        },
+        {
+          "currentValue": 1182,
+          "historyAcquisitionTime": "2025-12-14T11:44:13.444511"
+        },
+        {
+          "currentValue": 1165,
+          "historyAcquisitionTime": "2025-12-14T11:44:38.254511"
+        },
+        {
+          "currentValue": 1161,
+          "historyAcquisitionTime": "2025-12-14T11:45:03.064511"
+        },
+        {
+          "currentValue": 1171,
+          "historyAcquisitionTime": "2025-12-14T11:45:27.874511"
+        },
+        {
+          "currentValue": 1159,
+          "historyAcquisitionTime": "2025-12-14T11:45:52.684511"
+        },
+        {
+          "currentValue": 1151,
+          "historyAcquisitionTime": "2025-12-14T11:46:17.494511"
+        },
+        {
+          "currentValue": 1122,
+          "historyAcquisitionTime": "2025-12-14T11:46:42.304511"
+        },
+        {
+          "currentValue": 1115,
+          "historyAcquisitionTime": "2025-12-14T11:47:07.114511"
+        },
+        {
+          "currentValue": 1118,
+          "historyAcquisitionTime": "2025-12-14T11:47:31.924511"
+        },
+        {
+          "currentValue": 1101,
+          "historyAcquisitionTime": "2025-12-14T11:47:56.734511"
+        },
+        {
+          "currentValue": 1092,
+          "historyAcquisitionTime": "2025-12-14T11:48:21.544511"
+        },
+        {
+          "currentValue": 1082,
+          "historyAcquisitionTime": "2025-12-14T11:48:46.354511"
+        },
+        {
+          "currentValue": 1067,
+          "historyAcquisitionTime": "2025-12-14T11:49:11.164511"
+        },
+        {
+          "currentValue": 1057,
+          "historyAcquisitionTime": "2025-12-14T11:49:35.974511"
+        },
+        {
+          "currentValue": 1051,
+          "historyAcquisitionTime": "2025-12-14T11:50:00.784511"
+        },
+        {
+          "currentValue": 1049,
+          "historyAcquisitionTime": "2025-12-14T11:50:25.594511"
+        },
+        {
+          "currentValue": 1039,
+          "historyAcquisitionTime": "2025-12-14T11:50:50.404511"
+        },
+        {
+          "currentValue": 1341,
+          "historyAcquisitionTime": "2025-12-14T11:51:15.214511"
+        }
+      ]
+    }
+  ]
+}
