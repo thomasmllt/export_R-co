@@ -40,9 +40,9 @@ Dans src :
 
 Ce projet a été développé en 2025 par les membres du groupe de l'UE "Projet commande entreprise" 66 :
 
-- Nicolas ROYER
-- Julien CLUZEL
-- Joseph DENORME
-- Mohamed-Youssef CHERIF
-- POMIES Jonathan
-- Thomas MELLOUËT
+- [Nicolas ROYER](https://github.com/deezwit)
+- [Julien CLUZEL](https://github.com/Jujuc33)
+- [Joseph DENORME](https://github.com/jodeno)
+- [Mohamed-Youssef CHERIF](https://github.com/mycherif2003-ops)
+- [POMIES Jonathan](https://github.com/ano973)
+- [Thomas MELLOUËT](https://github.com/thomasmllt)
