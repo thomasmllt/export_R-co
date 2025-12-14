@@ -147,8 +147,8 @@ router.post("/", async (req, res) => {
           const description = geo.street || null;
 
           const ins = await client.query(
-            `INSERT INTO beacons (name, description) VALUES ($1, $2) RETURNING id`,
-            [name, description]
+            `INSERT INTO beacons (name, description, lat, lon) VALUES ($1, $2, $3, $4) RETURNING id`,
+            [name, description, lat, lon]
           );
           beaconId = ins.rows[0].id;
           createdBeaconIds.add(beaconId);

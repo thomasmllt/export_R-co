@@ -9,7 +9,7 @@ import logo from "./assets/logo_def-07.png";
 import locIcon from "./assets/loc.png";
 
 
-/*Chargement des balises avec GPS depuis les mesures*/
+/*Chargement des balises avec GPS depuis la table beacons*/
 async function loadBeacons() {
   try {
     const res = await fetch("https://r-co-api.onrender.com/beacon");
@@ -19,25 +19,17 @@ async function loadBeacons() {
         const beaconRes = await fetch(`https://r-co-api.onrender.com/beacon/${b.id}`);
         const beacon = await beaconRes.json();
         
-        // Récupérer les mesures de température (id_type=1) pour ce beacon spécifique
-        const measurementsRes = await fetch(`https://r-co-api.onrender.com/measurement/${b.id}/1`);
-        let latitude = 48.8566;
-        let longitude = 2.3522;
+        // Utiliser directement lat/lon du beacon
+        let latitude = beacon.lat;
+        let longitude = beacon.lon;
         
-        if (measurementsRes.ok) {
-          const measurements = await measurementsRes.json();
-          // Prendre la première mesure avec GPS valide pour ce beacon
-          const measurementWithGps = measurements.find(m => m.lat != null && m.lon != null);
-          if (measurementWithGps) {
-            latitude = measurementWithGps.lat;
-            longitude = measurementWithGps.lon;
-          }
-        }
-        
-        // Retourner le beacon avec les coordonnées GPS récupérées
         return {
           ...beacon,
-          position: [latitude, longitude]
+          position: [latitude, longitude],
+          geometry: {
+            type: "Point",
+            coordinates: [longitude, latitude]
+          }
         };
       } catch (err) {
         console.warn(`Erreur pour la balise ${b.id}:`, err.message);
