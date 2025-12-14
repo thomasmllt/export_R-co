@@ -1,6 +1,5 @@
 import './MyMap.css'
 import React, { useMemo,useState, useEffect } from 'react';
-import Loading from './Loading.jsx';
 import { MapContainer, Marker, useMap} from 'react-leaflet';
 import { useNavigate } from "react-router-dom";
 import * as EL from 'esri-leaflet';
@@ -408,7 +407,17 @@ function MyMap({ beacons }) {
   }, []);
 
   if (loading) {
-    return <Loading label="Chargement des balises..." />;
+    return (
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        fontSize: "1.2rem"
+      }}>
+        Chargement des balises...
+      </div>
+    );
   }
 
   return (
@@ -488,7 +497,7 @@ export default function MyMapInit() {
     fetchData();
   }, []);
 
-  if (loading) return <Loading label="Chargement..." />;
+  if (loading) return <p>Chargement...</p>;
   if (beacons.length == 0) return <p>Pas de balises.</p>;
 
   return <MyMap beacons={beacons} />;
