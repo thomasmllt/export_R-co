@@ -1,3 +1,5 @@
+// Scripts permettant de générer plusieurs mesures en France
+
 const https = require('https');
 
 // 10 villes en France (hors Nantes)
@@ -197,7 +199,7 @@ const sendPayload = (payload) => {
 
 // Fonction principale
 async function main() {
-  console.log("🚀 Début de la génération de données pour la dernière semaine de novembre 2025...\n");
+  console.log("Debut de la generation de donnees pour la derniere semaine de novembre 2025...\n");
   
   let totalSent = 0;
   let totalMeasurements = 0;
@@ -205,7 +207,7 @@ async function main() {
   
   // Pour chaque ville
   for (const city of cities) {
-    console.log(`📍 Traitement de ${city.name}...`);
+    console.log(`Traitement de ${city.name}...`);
     
     // Pour chaque jour de la dernière semaine (25-30 novembre = 6 jours)
     for (let day = 25; day <= 30; day++) {
@@ -220,31 +222,31 @@ async function main() {
           totalBeaconsCreated += result.beaconsCreated || 0;
           totalSent++;
           
-          process.stdout.write(`  25-30 nov: ${totalSent} payloads envoyés\r`);
+          process.stdout.write(`  25-30 nov: ${totalSent} payloads envoyes\r`);
         } else {
-          console.log(`  ⚠️  ${day} nov: ${result.message || 'Erreur inconnue'}`);
+          console.log(`  Alerte ${day} nov: ${result.message || 'Erreur inconnue'}`);
         }
         
         // Pause de 300ms entre chaque requête
         await new Promise(resolve => setTimeout(resolve, 300));
         
       } catch (error) {
-        console.log(`  ❌ ${day} nov: ${error.message}`);
+        console.log(`  Erreur ${day} nov: ${error.message}`);
       }
     }
     
-    console.log(`  ✅ ${city.name} terminé (6 jours envoyés)\n`);
+    console.log(`  ${city.name} termine (6 jours envoyes)\n`);
   }
   
   console.log("\n" + "=".repeat(50));
-  console.log("📊 RÉSUMÉ FINAL");
+  console.log("RESUME FINAL");
   console.log("=".repeat(50));
-  console.log(`✅ Requêtes envoyées: ${totalSent}`);
-  console.log(`📈 Mesures insérées: ${totalMeasurements}`);
-  console.log(`🏷️  Balises créées: ${totalBeaconsCreated}`);
-  console.log(`🏙️  Villes: ${cities.length}`);
-  console.log(`📅 Période: 25-30 novembre 2025 (6 jours)`);
-  console.log(`⏱️  Mesures/jour: 48 mesures × 7 capteurs = 336 par jour`);
+  console.log(`Requetes envoyees: ${totalSent}`);
+  console.log(`Mesures inserees: ${totalMeasurements}`);
+  console.log(`Balises creees: ${totalBeaconsCreated}`);
+  console.log(`Villes: ${cities.length}`);
+  console.log(`Periode: 25-30 novembre 2025 (6 jours)`);
+  console.log(`Mesures/jour: 48 mesures x 7 capteurs = 336 par jour`);
   console.log("=".repeat(50));
 }
 
