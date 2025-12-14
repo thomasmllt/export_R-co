@@ -2,3 +2,12 @@ node_modules/
 FrontEnd/node_modules/
 .DS_Store
 .env
+*.log
+gcm-diagnose.log
+
+.env.local
+.env.*.local
+
+npm-debug.log*
+yarn-error.log*
+measures_demo/
