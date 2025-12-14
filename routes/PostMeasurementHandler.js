@@ -34,8 +34,8 @@ router.post("/", async (req, res) => {
   const typeCache = new Map(); // sensorType -> id_type
   const createdBeaconIds = new Set();
 
-  // Reverse-geocode lat/lon into a nearby city using Nominatim (OSM).
-  const reverseGeocodeCity = (lat, lon) => new Promise((resolve) => {
+  // Reverse-geocode lat/lon to extract city and street using Nominatim (OSM).
+  const reverseGeocodeLocation = (lat, lon) => new Promise((resolve) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 4000);
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
@@ -48,14 +48,15 @@ router.post("/", async (req, res) => {
           const json = JSON.parse(data);
           const addr = json && json.address ? json.address : {};
           const city = addr.city || addr.town || addr.village || addr.municipality || addr.state;
-          resolve(city || null);
+          const street = addr.road || addr.pedestrian || addr.path || null;
+          resolve({ city: city || null, street });
         } catch (_e) {
-          resolve(null);
+          resolve({ city: null, street: null });
         }
       });
     }).on("error", () => {
       clearTimeout(timeout);
-      resolve(null);
+      resolve({ city: null, street: null });
     });
   });
 
@@ -141,18 +142,18 @@ router.post("/", async (req, res) => {
       // Créer une nouvelle balise si aucune trouvée
       if (!beaconId) {
         try {
-          const geoName = await reverseGeocodeCity(lat, lon);
-          const name = geoName || `Auto ${Date.now()}`;
-          const serial = `AUTO_${Date.now()}`;
+          const geo = await reverseGeocodeLocation(lat, lon);
+          const name = geo.city || `Beacon ${Date.now()}`;
+          const description = geo.street || null;
 
           const ins = await client.query(
-            `INSERT INTO beacons (serial, name, description) VALUES ($1, $2, $3) RETURNING id`,
-            [serial, name, null]
+            `INSERT INTO beacons (name, description) VALUES ($1, $2) RETURNING id`,
+            [name, description]
           );
           beaconId = ins.rows[0].id;
           createdBeaconIds.add(beaconId);
           beaconsCreated++;
-          console.log(`[postMeasurement] Created beacon ${beaconId} at ${name} (${lat},${lon})`);
+          console.log(`[postMeasurement] Created beacon ${beaconId} at ${name}${geo.street ? ' (' + geo.street + ')' : ''} (${lat},${lon})`);
         } catch (e) {
           errors.push({ sensorType, error: "Création beacon échouée: " + e.message });
           continue;
