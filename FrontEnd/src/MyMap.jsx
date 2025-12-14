@@ -19,14 +19,14 @@ async function loadBeacons() {
         const beaconRes = await fetch(`https://r-co-api.onrender.com/beacon/${b.id}`);
         const beacon = await beaconRes.json();
         
-        // Récupérer les mesures pour obtenir les coordonnées GPS
+        // Récupérer les mesures de température (id_type=1) pour ce beacon spécifique
         const measurementsRes = await fetch(`https://r-co-api.onrender.com/measurement/${b.id}/1`);
         let latitude = 48.8566;
         let longitude = 2.3522;
         
         if (measurementsRes.ok) {
           const measurements = await measurementsRes.json();
-          // Prendre la première mesure avec GPS valide
+          // Prendre la première mesure avec GPS valide pour ce beacon
           const measurementWithGps = measurements.find(m => m.lat != null && m.lon != null);
           if (measurementWithGps) {
             latitude = measurementWithGps.lat;
@@ -34,13 +34,10 @@ async function loadBeacons() {
           }
         }
         
+        // Retourner le beacon avec les coordonnées GPS récupérées
         return {
           ...beacon,
-          position: [latitude, longitude],
-          geometry: {
-            type: "Point",
-            coordinates: [longitude, latitude]
-          }
+          position: [latitude, longitude]
         };
       } catch (err) {
         console.warn(`Erreur pour la balise ${b.id}:`, err.message);
@@ -352,12 +349,69 @@ function WidgetItem({ feature, isSelected, onClick, setSelectedId }) {
 /*Création de la page*/
 function MyMap({ beacons }) {
   const [selectedId, setSelectedId] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [markers, setMarkers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     document.title = "Carte Balises";
-    // Note: les balises sont déjà chargées via loadBeacons() dans MyMapInit()
-    // et passées en props à MyMap, donc ce fetch local est redondant
+
+    const fetchBeacons = async () => {
+      try {
+        const beaconsRes = await fetch("https://r-co-api.onrender.com/beacon");
+        const beaconIds = await beaconsRes.json();
+        const markersData = await Promise.all(
+          beaconIds.map(async (beacon) => {
+            try {
+              const res = await fetch(`https://r-co-api.onrender.com/beacon/${beacon.id}`);
+              if (!res.ok) {
+                console.warn(`Balise ${beacon.id} non disponible (HTTP ${res.status}), ignorée`);
+                return null;
+              }
+              const contentType = res.headers.get("content-type");
+              if (!contentType || !contentType.includes("application/json")) {
+                console.warn(`Réponse non-JSON pour la balise ${beacon.id}, ignorée`);
+                return null;
+              }
+
+              const data = await res.json();
+              let latitude = 48.8566;
+              let longitude = 2.3522;
+
+              if (data.position) {
+                const coords = data.position.split(",").map(c => parseFloat(c.trim()));
+                if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                  latitude = coords[0];
+                  longitude = coords[1];
+                }
+              }
+
+              return {
+                id: data.id,
+                name: data.name || "Balise sans nom",
+                serial: data.serial || "",
+                description: data.description || "",
+                position: [longitude, latitude],
+                properties: { cluster: false },
+                geometry: {
+                  type: "Point",
+                  coordinates: [longitude, latitude]
+                }
+              };
+            } catch (err) {
+              console.warn(`Erreur pour la balise ${beacon.id}:`, err.message);
+              return null;
+            }
+          })
+        );
+        setMarkers(markersData.filter(m => m !== null));
+      } catch (err) {
+        console.error("Erreur lors de la récupération des balises:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBeacons();
   }, []);
 
   if (loading) {

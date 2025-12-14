@@ -46,11 +46,11 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// GET all measurement timestamp+value for beacon id and type of measurment
+// GET all measurement timestamp+value+gps for beacon id and type of measurment
 router.get("/:id/:type", async (req, res) => {
   const { id, type } = req.params;
   try {
-    const result = await pool.query("SELECT timestamp, value FROM measurements WHERE id_beacon=$1 AND id_type=$2 ORDER BY timestamp ASC" , [id, type]);
+    const result = await pool.query("SELECT timestamp, value, lat, lon FROM measurements WHERE id_beacon=$1 AND id_type=$2 ORDER BY timestamp ASC" , [id, type]);
     if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
     res.json(result.rows);
   } catch (err) {
