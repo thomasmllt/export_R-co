@@ -38,7 +38,7 @@ Dans src :
 
 3. Contributeurs :
 
-Ce projet a été développé en 2025 par les membres du groupe de l'UE "Projet commande entreprise" 66 :
+Ce projet a été développé à l'automne 2025 par les membres du groupe de l'UE "Projet commande entreprise" 66 :
 
 - [Nicolas ROYER](https://github.com/deezwit)
 - [Julien CLUZEL](https://github.com/Jujuc33)
